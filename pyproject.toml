@@ -1,0 +1,58 @@
+[tool.poetry]
+name = "nzb"
+version = "0.1.0"
+description = "A spec compliant parser and meta editor for NZB files"
+authors = ["Ravencentric <me@ravencentric.cc>"]
+readme = "README.md"
+license = "Unlicense"
+packages = [{ include = "nzb", from = "src" }]
+keywords = ["nzb", "usenet", "parser"]
+homepage = "https://nzb.ravencentric.cc"
+repository = "https://github.com/Ravencentric/nzb"
+documentation = "https://nzb.ravencentric.cc"
+classifiers = [
+    "License :: OSI Approved :: The Unlicense (Unlicense)",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Typing :: Typed",
+]
+
+[tool.poetry.dependencies]
+python = ">=3.10"
+xmltodict = ">=0.13.0"
+pydantic = ">=2.8.2"
+typing-extensions = ">=4.12.2"
+natsort = ">=8.4.0"
+
+[tool.poetry.group.dev.dependencies]
+ruff = "^0.5.3"
+mypy = "^1.10.1"
+pytest = "^8.2.2"
+coverage = "^7.6.0"
+pre-commit = "^3.7.1"
+types-xmltodict = "^0.13.0.3"
+
+[tool.poetry.group.docs.dependencies]
+mkdocs-material = "^9.5.29"
+mkdocstrings = {extras = ["python"], version = "^0.25.1"}
+mkdocs-autorefs = "^1.0.1"
+
+[tool.ruff]
+line-length = 120
+
+[tool.ruff.lint]
+extend-select = ["I"]
+fixable = ["ALL"]
+
+[tool.mypy]
+strict = true
+pretty = true
+
+[tool.coverage.run]
+omit = ["src/nzb/_version.py", "tests/*"]
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

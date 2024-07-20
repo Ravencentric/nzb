@@ -1,0 +1,2 @@
+::: nzb.NZBException
+::: nzb.InvalidNZBError
