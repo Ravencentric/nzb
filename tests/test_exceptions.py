@@ -42,6 +42,7 @@ valid_xml_but_invalid_nzb = """\
     </file>
 </nzb>"""
 
+
 def test_invalid_nzb_error() -> None:
     try:
         message = "Missing something in the NZB"
@@ -50,6 +51,7 @@ def test_invalid_nzb_error() -> None:
         assert error.message == message
         assert str(error) == message
         assert repr(error) == 'InvalidNZBError("Missing something in the NZB")'
+
 
 def test_saving_without_filename() -> None:
     with pytest.raises(FileNotFoundError):
@@ -62,19 +64,18 @@ def test_saving_overwrite() -> None:
 
 
 def test_parsing_invalid_nzb() -> None:
-
     with pytest.raises(InvalidNZBError):
         NZBParser(invalid_xml)
 
     # No error here because __init__ only checks if it's a valid XML
-    assert NZBParser(valid_xml_but_invalid_nzb)._NZBParser__nzbdict # type: ignore
+    assert NZBParser(valid_xml_but_invalid_nzb)._NZBParser__nzbdict  # type: ignore
 
     with pytest.raises(InvalidNZBError):
         # Error here because parse() does additional checks
         NZBParser(valid_xml_but_invalid_nzb).parse()
 
-def test_editing_invalid_nzb() -> None:
 
+def test_editing_invalid_nzb() -> None:
     with pytest.raises(InvalidNZBError):
         NZBMetaEditor(invalid_xml)
 

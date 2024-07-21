@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "nzb"
-version = "0.1.0"
+version = "0.1.1"
 description = "A spec compliant parser and meta editor for NZB files"
 authors = ["Ravencentric <me@ravencentric.cc>"]
 readme = "README.md"
