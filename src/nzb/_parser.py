@@ -41,7 +41,7 @@ def parse_metadata(nzb: dict[str, Any]) -> Metadata:
 
     # Here's the type representation of the three possible cases that we need to handle
     MetaFieldType: TypeAlias = Union[list[dict[str, str]], dict[str, str], None]
-    
+
     # Explicit cast to tell typecheckers the return type based on the above 3 points.
     meta = cast(MetaFieldType, meta)
 
@@ -123,7 +123,7 @@ def parse_segments(segmentdict: dict[str, list[dict[str, str]] | dict[str, str] 
 
     if segments is None:
         raise InvalidNZBError("Missing or malformed <segments>...</segments>!")
-    
+
     if isinstance(segments, dict):
         segments = [segments]
 
@@ -178,7 +178,7 @@ def parse_files(nzb: dict[str, Any]) -> tuple[File, ...]:
 
     for file in files:
         groupset: set[str] = set()
-        
+
         groups = file.get("groups").get("group") if file.get("groups") else None
         # There's 3 possible things that we can get from the above here:
         # - A list of strings if there's more than 1 group present, i.e, list[str]
@@ -190,7 +190,7 @@ def parse_files(nzb: dict[str, Any]) -> tuple[File, ...]:
 
         # Explicit cast to tell typecheckers the return type based on the above 3 points.
         groups = cast(GroupFieldType, groups)
-        
+
         if groups is None:
             raise InvalidNZBError("Missing or malformed <groups>...</groups>!")
 
@@ -204,7 +204,7 @@ def parse_files(nzb: dict[str, Any]) -> tuple[File, ...]:
                 poster=file.get("@poster"),
                 datetime=file.get("@date"),
                 subject=file.get("@subject"),
-                groups=natsorted(groupset), # type: ignore
+                groups=natsorted(groupset),  # type: ignore
                 segments=parse_segments(file.get("segments")),
             )
         )

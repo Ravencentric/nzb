@@ -7,6 +7,7 @@ class NZBException(Exception):
 
 class InvalidNZBError(NZBException):
     """Invalid NZB"""
+
     def __init__(self, message: str) -> None:
         self.message = message
         super().__init__(message)
