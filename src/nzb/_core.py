@@ -4,6 +4,7 @@ from collections import OrderedDict
 from pathlib import Path
 from xml.parsers.expat import ExpatError
 
+from pydantic import validate_call
 from typing_extensions import Literal, Self, overload
 from xmltodict import parse as xmltodict_parse
 from xmltodict import unparse as xmltodict_unparse
@@ -16,6 +17,7 @@ from nzb._utils import construct_meta_fields
 
 
 class NZBParser:
+    @validate_call
     def __init__(self, nzb: str, encoding: str | None = "utf-8") -> None:
         """
         Initialize the NZBParser instance.
@@ -60,6 +62,7 @@ class NZBParser:
         return NZB(metadata=metadata, files=files)
 
     @classmethod
+    @validate_call
     def from_file(cls, nzb: str | Path, encoding: str | None = "utf-8") -> Self:
         """
         Create an NZBParser instance from an NZB file path.
@@ -81,6 +84,7 @@ class NZBParser:
 
 
 class NZBMetaEditor:
+    @validate_call
     def __init__(self, nzb: str, encoding: str = "utf-8") -> None:
         """
         Initialize the NZBMetaEditor instance.
@@ -116,6 +120,7 @@ class NZBMetaEditor:
         """
         return self.__nzbdict.get("nzb", {}).get("head", {}).get("meta")  # type: ignore
 
+    @validate_call
     def set(
         self,
         *,
@@ -156,6 +161,7 @@ class NZBMetaEditor:
         self.__nzbdict["nzb"] = nzb
         return self
 
+    @validate_call
     def append(
         self,
         *,
@@ -206,6 +212,7 @@ class NZBMetaEditor:
     @overload
     def remove(self, key: str) -> Self: ...
 
+    @validate_call
     def remove(self, key: Literal["title", "password", "tag", "category"] | str) -> Self:
         """
         Remove a metadata field from the NZB.
@@ -253,6 +260,7 @@ class NZBMetaEditor:
 
         return self
 
+    @validate_call
     def save(self, filename: str | Path | None = None, overwrite: bool = False) -> Path:
         """
         Save the edited NZB to a file.
@@ -307,6 +315,7 @@ class NZBMetaEditor:
         return outfile
 
     @classmethod
+    @validate_call
     def from_file(cls, nzb: str | Path, encoding: str = "utf-8") -> Self:
         """
         Create an NZBMetaEditor instance from an NZB file path.
