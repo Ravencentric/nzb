@@ -6,9 +6,10 @@ https://web.archive.org/web/20240709113825/https://sabnzbd.org/wiki/extra/nzb-sp
 from __future__ import annotations
 
 import re
-from typing import Any
+from typing import Any, cast
 
 from natsort import natsorted
+from typing_extensions import TypeAlias, Union
 
 from nzb._exceptions import InvalidNZBError
 from nzb._models import File, Metadata, Segment
@@ -32,12 +33,21 @@ def parse_metadata(nzb: dict[str, Any]) -> Metadata:
     ```
     """
 
-    # This will either be a dict (single metadata key)
-    # or a list of dicts (multiple metadata keys)
-    meta = nzb.get("nzb", dict()).get("head", dict()).get("meta")
+    meta = nzb.get("nzb", {}).get("head", {}).get("meta")
+    # There's 3 possible things that we can get from the above here:
+    # - A list of dictionaries if there's more than 1 meta field present
+    # - A dictionary if there's only one meta field present
+    # - None if there's no meta field
+
+    # Here's the type representation of the three possible cases that we need to handle
+    MetaFieldType: TypeAlias = Union[list[dict[str, str]], dict[str, str], None]
+    
+    # Explicit cast to tell typecheckers the return type based on the above 3 points.
+    meta = cast(MetaFieldType, meta)
 
     if meta is None:
-        # Metadata is optional
+        # Metadata is optional, so we will not error
+        # just return an instance with all values set to None
         return Metadata()
 
     if isinstance(meta, dict):
@@ -85,9 +95,14 @@ def parse_metadata(nzb: dict[str, Any]) -> Metadata:
     )
 
 
-def parse_segments(segments: dict[str, list[dict[str, str]] | dict[str, str]] | None) -> tuple[Segment, ...]:
+def parse_segments(segmentdict: dict[str, list[dict[str, str]] | dict[str, str] | None] | None) -> tuple[Segment, ...]:
     """
     Parses the <segments>...</segments> field present in an NZB.
+
+    There's 3 possible things that we can get here:
+    - A list of dictionaries if there's more than 1 segment field present
+    - A dictionary if there's only one segment field present
+    - None if there's no segment field
 
     ```xml
     <?xml version="1.0" encoding="iso-8859-1" ?>
@@ -103,22 +118,24 @@ def parse_segments(segments: dict[str, list[dict[str, str]] | dict[str, str]] | 
     </nzb>
     ```
     """
+    # It's nested or possibly None
+    segments = segmentdict.get("segment") if segmentdict else None
 
     if segments is None:
         raise InvalidNZBError("Missing or malformed <segments>...</segments>!")
+    
+    if isinstance(segments, dict):
+        segments = [segments]
 
-    segmentset = set()
-    segmentlist = [segments["segment"]] if isinstance(segments["segment"], dict) else segments["segment"]
+    segmentset: set[Segment] = set()
 
-    for segment in segmentlist:
+    for segment in segments:
+        print(segment)
         size = segment["@bytes"]
         number = segment["@number"]
         message_id = segment["#text"]
 
         segmentset.add(Segment(size=size, number=number, message_id=message_id))  # type: ignore
-
-    if len(segmentset) == 0:  # pragma: no cover
-        raise InvalidNZBError("Missing segments!")
 
     return tuple(natsorted(segmentset, key=lambda seg: seg.number))
 
@@ -139,12 +156,17 @@ def parse_files(nzb: dict[str, Any]) -> tuple[File, ...]:
     ```
     """
 
-    # This will either be a dict (single file)
-    # or a list of dicts (multiple files)
-    try:
-        files = nzb.get("nzb", dict()).get("file")
-    except Exception as error:  # pragma: no cover
-        raise InvalidNZBError("Missing or malformed <file>...</file>!") from error
+    files = nzb.get("nzb", {}).get("file")
+    # There's 3 possible things that we can get from the above here:
+    # - A list of dictionaries if there's more than 1 file field present, i.e, list[dict[str, str]]
+    # - A dictionary if there's only one file field present, i.e, dict[str, str]
+    # - None if there's no meta field
+
+    # Here's the type representation of the three possible cases that we need to handle
+    FileFieldType: TypeAlias = Union[list[dict[str, str]], dict[str, str], None]
+
+    # Explicit cast to tell typecheckers the return type based on the above 3 points.
+    files = cast(FileFieldType, files)
 
     if files is None:
         raise InvalidNZBError("Missing or malformed <file>...</file>!")
@@ -156,25 +178,33 @@ def parse_files(nzb: dict[str, Any]) -> tuple[File, ...]:
 
     for file in files:
         groupset: set[str] = set()
-        try:
-            groups: list[str] | str = file.get("groups", dict()).get("group", [])
-        except Exception as error:
-            raise InvalidNZBError("Missing or malformed <groups>...</groups>!") from error
+        
+        groups = file.get("groups").get("group") if file.get("groups") else None
+        # There's 3 possible things that we can get from the above here:
+        # - A list of strings if there's more than 1 group present, i.e, list[str]
+        # - A string if there's only one file field present, i.e, str
+        # - None if there's no group field
+
+        # Here's the type representation of the three possible cases that we need to handle
+        GroupFieldType: TypeAlias = Union[list[str], str, None]
+
+        # Explicit cast to tell typecheckers the return type based on the above 3 points.
+        groups = cast(GroupFieldType, groups)
+        
+        if groups is None:
+            raise InvalidNZBError("Missing or malformed <groups>...</groups>!")
 
         if isinstance(groups, str):
             groupset.add(groups)
         else:
             groupset.update(groups)
 
-        if len(groupset) == 0:
-            raise InvalidNZBError("Missing groups!")
-
         fileset.add(
             File(
-                poster=file.get("@poster"),  # type: ignore
-                datetime=file.get("@date"),  # type: ignore
-                subject=file.get("@subject"),  # type: ignore
-                groups=natsorted(groupset),  # type: ignore
+                poster=file.get("@poster"),
+                datetime=file.get("@date"),
+                subject=file.get("@subject"),
+                groups=natsorted(groupset), # type: ignore
                 segments=parse_segments(file.get("segments")),
             )
         )

@@ -2,11 +2,13 @@ from __future__ import annotations
 
 from collections import OrderedDict
 from pathlib import Path
+from xml.parsers.expat import ExpatError
 
 from typing_extensions import Literal, Self, overload
 from xmltodict import parse as xmltodict_parse
 from xmltodict import unparse as xmltodict_unparse
 
+from nzb._exceptions import InvalidNZBError
 from nzb._models import NZB
 from nzb._parser import parse_doctype, parse_files, parse_metadata
 from nzb._types import CollectionOf
@@ -24,10 +26,19 @@ class NZBParser:
             NZB content as a string.
         encoding : str, optional
             Encoding of the NZB content, defaults to `utf-8`.
+
+        Raises
+        ------
+        InvalidNZBError
+            Raised if the input is not valid XML.
+            However, being valid XML doesn't guarantee it's a correctly structured NZB.
         """
         self.__nzb = nzb
         self.__encoding = encoding
-        self.__nzbdict = xmltodict_parse(self.__nzb, encoding=self.__encoding)
+        try:
+            self.__nzbdict = xmltodict_parse(self.__nzb, encoding=self.__encoding)
+        except ExpatError as error:
+            raise InvalidNZBError(error.args[0])
 
     def parse(self) -> NZB:
         """
@@ -41,7 +52,7 @@ class NZBParser:
         Raises
         ------
         InvalidNZBError
-            Invalid NZB.
+            Raised if the input is not valid NZB.
         """
         metadata = parse_metadata(self.__nzbdict)
         files = parse_files(self.__nzbdict)
@@ -80,10 +91,19 @@ class NZBMetaEditor:
             NZB content as a string.
         encoding : str, optional
             Encoding of the NZB content, defaults to `utf-8`.
+
+        Raises
+        ------
+        InvalidNZBError
+            Raised if the input is not valid XML.
+            However, being valid XML doesn't guarantee it's a correctly structured NZB.
         """
         self.__nzb = nzb
         self.__encoding = encoding
-        self.__nzbdict = xmltodict_parse(self.__nzb, encoding=self.__encoding)
+        try:
+            self.__nzbdict = xmltodict_parse(self.__nzb, encoding=self.__encoding)
+        except ExpatError as error:
+            raise InvalidNZBError(error.args[0])
 
     def __get_meta(self) -> list[dict[str, str]] | dict[str, str] | None:
         """
