@@ -273,11 +273,18 @@ class NZB(ParentModel):
         return tuple(natsorted(groupset))
 
     @cache
-    def is_rar(self) -> bool:
+    def has_rar(self) -> bool:
         """
         Return `True` if any file in the NZB is a `.rar` file, `False` otherwise.
         """
         return any((file.is_rar() for file in self.files))
+
+    @cache
+    def is_rar(self) -> bool:
+        """
+        Return `True` if all files in the NZB are `.rar` files, `False` otherwise.
+        """
+        return all((file.is_rar() for file in self.files))
 
     @cache
     def is_obfuscated(self) -> bool:
