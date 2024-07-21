@@ -116,3 +116,15 @@ def test_non_standard_meta() -> None:
     assert nzb.metadata.passwords is None
     assert nzb.metadata.tags is None
     assert nzb.metadata.category is None
+
+def test_single_rar_nzb() -> None:
+    nzb = NZBParser.from_file(nzbs / "one_rar_file.nzb").parse()
+    assert nzb.has_rar() is True
+    assert nzb.is_rar() is False
+    assert nzb.has_par2() is False
+
+def test_multi_rar_nzb() -> None:
+    nzb = NZBParser.from_file(nzbs / "multi_rar.nzb").parse()
+    assert nzb.has_rar() is True
+    assert nzb.is_rar() is True
+    assert nzb.has_par2() is False
