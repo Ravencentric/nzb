@@ -130,7 +130,6 @@ def parse_segments(segmentdict: dict[str, list[dict[str, str]] | dict[str, str] 
     segmentset: set[Segment] = set()
 
     for segment in segments:
-        print(segment)
         size = segment["@bytes"]
         number = segment["@number"]
         message_id = segment["#text"]
