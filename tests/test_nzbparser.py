@@ -135,7 +135,6 @@ def test_valid_nzb_with_one_missing_segment() -> None:
     )
 
 
-
 def test_bad_subject() -> None:
     nzb = NZBParser.from_file(nzbs / "bad_subject.nzb").parse()
     assert nzb.files[0].name == ""
@@ -168,4 +167,3 @@ def test_multi_rar_nzb() -> None:
     assert nzb.has_rar() is True
     assert nzb.is_rar() is True
     assert nzb.has_par2() is False
-
