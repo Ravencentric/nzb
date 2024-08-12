@@ -131,11 +131,12 @@ def parse_segments(segmentdict: dict[str, list[dict[str, str]] | dict[str, str] 
 
     for segment in segments:
         print(segment)
-        size = segment["@bytes"]
-        number = segment["@number"]
-        message_id = segment["#text"]
+        size = segment.get("@bytes")
+        number = segment.get("@number")
+        message_id = segment.get("#text")
 
-        segmentset.add(Segment(size=size, number=number, message_id=message_id))  # type: ignore
+        if size and number and message_id:
+            segmentset.add(Segment(size=size, number=number, message_id=message_id))  # type: ignore
 
     return tuple(natsorted(segmentset, key=lambda seg: seg.number))
 
