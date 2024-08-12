@@ -98,6 +98,44 @@ def test_big_buck_bunny() -> None:
     )
 
 
+def test_valid_nzb_with_one_missing_segment() -> None:
+    nzb = NZBParser.from_file(nzbs / "valid_nzb_with_one_missing_segment.nzb").parse()
+
+    assert nzb.file == File(
+        poster="John <nzb@nowhere.example>",
+        datetime=datetime.datetime(2024, 1, 28, 11, 18, 28, tzinfo=datetime.timezone.utc),
+        subject='[1/5] - "Big Buck Bunny - S01E01.mkv" yEnc (1/24) 16981056',
+        groups=("alt.binaries.boneless",),
+        segments=(
+            Segment(size=739067, number=1, message_id="9cacde4c986547369becbf97003fb2c5-9483514693959@example"),
+            Segment(size=739549, number=2, message_id="70a3a038ce324e618e2751e063d6a036-7285710986748@example"),
+            Segment(size=739728, number=3, message_id="a209875cefd44440aa91590508b48f5b-4625756912881@example"),
+            Segment(size=739664, number=4, message_id="44057720ed4e45e4bce21d53249d03f8-8250738040266@example"),
+            Segment(size=739645, number=5, message_id="cfc13d14583c484483aa49ac420bad27-9491395432062@example"),
+            Segment(size=739538, number=6, message_id="5e90857531be401e9d0b632221fe2fb7-9854527985639@example"),
+            Segment(size=739708, number=7, message_id="c33a2bba79494840a09d750b19d3b287-2550637855678@example"),
+            Segment(size=739490, number=8, message_id="38006019d94f4ecc8f19c389c00f1ebe-7841585708380@example"),
+            Segment(size=739667, number=9, message_id="b75a2425bef24fd5affb00dc3db789f6-7051027232703@example"),
+            Segment(size=739540, number=10, message_id="79a027e3bfde458ea2bd0db1632fc84e-7270120407913@example"),
+            Segment(size=739657, number=11, message_id="fb2bd74e1257487a9240ef0cf81765cc-7147741101314@example"),
+            Segment(size=739647, number=12, message_id="d39ca8be78c34e3fa6f3211f1b397b3a-4725950858191@example"),
+            # 13th Segment is missing here
+            Segment(size=739721, number=14, message_id="2f1cec363ed24584b4127af86ac312ad-7204153818612@example"),
+            Segment(size=739740, number=15, message_id="30ff3514896543a8ac91ec80346a5d40-9134304686352@example"),
+            Segment(size=739538, number=16, message_id="1f75cfa20d884b5b972cfd2e9ebef249-8919850122587@example"),
+            Segment(size=739646, number=17, message_id="8e22b0f973de4393a0a30ab094565316-6722799721412@example"),
+            Segment(size=739610, number=18, message_id="faddf83650cc4de1a8bee68cffca40a1-5979589815618@example"),
+            Segment(size=739514, number=19, message_id="6b8c23e43d4240da812b547babdc0423-6409257710918@example"),
+            Segment(size=739920, number=20, message_id="802bd0dcef134ac690044e0a09fece60-8492061912475@example"),
+            Segment(size=739634, number=21, message_id="efc4b3966a1f4b7787677e9e9a214727-5444471572012@example"),
+            Segment(size=739691, number=22, message_id="247efca709114fd181bcaef0f487925f-4076317880026@example"),
+            Segment(size=739638, number=23, message_id="665d9fc5edba4faca68ae835b702b4c7-9814601723860@example"),
+            Segment(size=510541, number=24, message_id="962fddf3e07444988731b52aeaa9b2aa-1283919353788@example"),
+        ),
+    )
+
+
+
 def test_bad_subject() -> None:
     nzb = NZBParser.from_file(nzbs / "bad_subject.nzb").parse()
     assert nzb.files[0].name == ""
@@ -130,3 +168,4 @@ def test_multi_rar_nzb() -> None:
     assert nzb.has_rar() is True
     assert nzb.is_rar() is True
     assert nzb.has_par2() is False
+

@@ -130,9 +130,15 @@ def parse_segments(segmentdict: dict[str, list[dict[str, str]] | dict[str, str] 
     segmentset: set[Segment] = set()
 
     for segment in segments:
-        size = segment["@bytes"]
-        number = segment["@number"]
-        message_id = segment["#text"]
+        try:
+            size = segment["@bytes"]
+            number = segment["@number"]
+            message_id = segment["#text"]
+        except KeyError:
+            # This segment is broken
+            # We do not error here because a few missing
+            # segments don't invalidate the nzb.
+            continue
 
         segmentset.add(Segment(size=size, number=number, message_id=message_id))  # type: ignore
 
