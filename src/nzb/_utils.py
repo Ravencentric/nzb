@@ -1,8 +1,9 @@
 from __future__ import annotations
 
 from functools import lru_cache
+from typing import Callable, cast
 
-from typing_extensions import Callable, ParamSpec, TypeVar, cast
+from typing_extensions import ParamSpec, TypeVar
 
 from nzb._types import CollectionOf
 

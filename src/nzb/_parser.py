@@ -6,10 +6,10 @@ https://web.archive.org/web/20240709113825/https://sabnzbd.org/wiki/extra/nzb-sp
 from __future__ import annotations
 
 import re
-from typing import Any, cast
+from typing import Any, Union, cast
 
 from natsort import natsorted
-from typing_extensions import TypeAlias, Union
+from typing_extensions import TypeAlias
 
 from nzb._exceptions import InvalidNZBError
 from nzb._models import File, Metadata, Segment

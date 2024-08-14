@@ -1,9 +1,10 @@
 from __future__ import annotations
 
 from datetime import datetime, timezone
+from typing import Union
 
 from pydantic import AfterValidator
-from typing_extensions import Annotated, TypeAlias, TypeVar, Union
+from typing_extensions import Annotated, TypeAlias, TypeVar
 
 T = TypeVar("T")
 
