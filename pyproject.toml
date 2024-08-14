@@ -52,6 +52,7 @@ required-imports = ["from __future__ import annotations"]
 [tool.mypy]
 strict = true
 pretty = true
+exclude = "tests/"
 
 [tool.coverage.run]
 omit = ["src/nzb/_version.py", "tests/*"]

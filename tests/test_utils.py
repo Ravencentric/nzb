@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from nzb._utils import construct_meta_fields
 
 

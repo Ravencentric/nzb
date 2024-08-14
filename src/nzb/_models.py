@@ -22,7 +22,7 @@ class Metadata(ParentModel):
     """Title."""
 
     passwords: tuple[str, ...] | None = None  # Can be specified multiple times.
-    """Password(s).""" 
+    """Password(s)."""
 
     tags: tuple[str, ...] | None = None  # Can be specified multiple times.
     """Tag(s)."""
@@ -40,7 +40,6 @@ class Metadata(ParentModel):
         because although the spec allows multiple passwords, single passwords are far more common.
         """
         return self.passwords[0] if self.passwords else None
-            
 
     @cached_property
     def tag(self) -> str | None:
@@ -81,7 +80,7 @@ class File(ParentModel):
     """Groups that reference the file."""
 
     segments: tuple[Segment, ...]  # Every file must have atleast one segment.
-    """Segments that make up the file.""" 
+    """Segments that make up the file."""
 
     @cached_property
     def size(self) -> ByteSize:
