@@ -12,7 +12,7 @@ from xmltodict import unparse as xmltodict_unparse
 from nzb._exceptions import InvalidNZBError
 from nzb._models import NZB
 from nzb._parser import parse_doctype, parse_files, parse_metadata
-from nzb._types import CollectionOf
+from nzb._types import CollectionOf, StrPath
 from nzb._utils import construct_meta_fields
 
 
@@ -63,13 +63,13 @@ class NZBParser:
 
     @classmethod
     @validate_call
-    def from_file(cls, nzb: str | Path, encoding: str | None = "utf-8") -> Self:
+    def from_file(cls, nzb: StrPath, encoding: str | None = "utf-8") -> Self:
         """
         Create an NZBParser instance from an NZB file path.
 
         Parameters
         ----------
-        nzb : str | Path
+        nzb : StrPath
             File path to the NZB.
         encoding : str, optional
             Encoding of the NZB, defaults to `utf-8`.
@@ -79,7 +79,7 @@ class NZBParser:
         NZBParser
             An NZBParser instance initialized with the content of the specified NZB file.
         """
-        nzb = Path(nzb).resolve().read_text(encoding=encoding)
+        nzb = Path(nzb).expanduser().resolve().read_text(encoding=encoding)
         return cls(nzb, encoding)
 
 
@@ -261,13 +261,13 @@ class NZBMetaEditor:
         return self
 
     @validate_call
-    def save(self, filename: str | Path | None = None, overwrite: bool = False) -> Path:
+    def save(self, filename: StrPath | None = None, overwrite: bool = False) -> Path:
         """
         Save the edited NZB to a file.
 
         Parameters
         ----------
-        filename : str | Path, optional
+        filename : StrPath, optional
             Destination path for saving the NZB.
             If not provided, uses the original file path if available.
             This will also create the path if it doesn't exist already.
@@ -316,13 +316,13 @@ class NZBMetaEditor:
 
     @classmethod
     @validate_call
-    def from_file(cls, nzb: str | Path, encoding: str = "utf-8") -> Self:
+    def from_file(cls, nzb: StrPath, encoding: str = "utf-8") -> Self:
         """
         Create an NZBMetaEditor instance from an NZB file path.
 
         Parameters
         ----------
-        nzb : str | Path
+        nzb : StrPath
             File path to the NZB.
         encoding : str, optional
             Encoding of the NZB, defaults to `utf-8`.
@@ -332,8 +332,7 @@ class NZBMetaEditor:
         Self
             Returns itself.
         """
-        nzb = Path(nzb).resolve()
-        data = nzb.read_text(encoding=encoding)
+        data = Path(nzb).expanduser().resolve().read_text(encoding=encoding)
         instance = cls(data, encoding)
         setattr(instance, "__nzb_file", nzb)
         return instance

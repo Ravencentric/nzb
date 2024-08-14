@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from datetime import datetime, timezone
+from pathlib import Path
 from typing import Union
 
 from pydantic import AfterValidator
@@ -8,12 +9,10 @@ from typing_extensions import Annotated, TypeAlias, TypeVar
 
 T = TypeVar("T")
 
+StrPath: TypeAlias = Union[str, Path]
+"""String or pathlib.Path"""
 
-def to_utc(dt: datetime) -> datetime:
-    return dt.astimezone(timezone.utc)
-
-
-UTCDateTime = Annotated[datetime, AfterValidator(to_utc)]
+UTCDateTime = Annotated[datetime, AfterValidator(lambda dt: dt.astimezone(timezone.utc))]
 """datetime that's always in UTC."""
 
 CollectionOf: TypeAlias = Union[list[T], tuple[T, ...], set[T]]
