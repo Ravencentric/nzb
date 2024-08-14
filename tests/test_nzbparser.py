@@ -13,6 +13,8 @@ def test_spec_example_nzb() -> None:
     assert nzb.metadata.title == "Your File!"
     assert nzb.metadata.passwords == ("secret",)
     assert nzb.metadata.tags == ("HD",)
+    assert nzb.metadata.password == "secret"
+    assert nzb.metadata.tag == "HD"
     assert nzb.metadata.category == "TV"
     assert len(nzb.files) == 1
     assert nzb.is_rar() is True
@@ -37,6 +39,8 @@ def test_big_buck_bunny() -> None:
     assert nzb.metadata.title is None
     assert nzb.metadata.passwords is None
     assert nzb.metadata.tags is None
+    assert nzb.metadata.password is None
+    assert nzb.metadata.tag is None
     assert nzb.metadata.category is None
     assert len(nzb.files) == 5
     assert nzb.is_rar() is False

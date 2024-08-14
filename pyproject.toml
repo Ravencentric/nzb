@@ -46,6 +46,9 @@ line-length = 120
 extend-select = ["I"]
 fixable = ["ALL"]
 
+[tool.ruff.lint.isort]
+required-imports = ["from __future__ import annotations"]
+
 [tool.mypy]
 strict = true
 pretty = true
