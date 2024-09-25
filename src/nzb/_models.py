@@ -1,13 +1,19 @@
 from __future__ import annotations
 
-import re
 from functools import cached_property
-from os.path import splitext
 
 from natsort import natsorted
 from pydantic import BaseModel, ByteSize, ConfigDict
 
 from nzb._types import UTCDateTime
+from nzb._utils import (
+    name_is_obfuscated,
+    name_is_par2,
+    name_is_rar,
+    name_to_stem,
+    name_to_suffix,
+    subject_to_name,
+)
 
 
 class ParentModel(BaseModel):
@@ -92,15 +98,7 @@ class File(ParentModel):
         Complete name of the file with it's extension extracted from the subject.
         May return an empty string if it fails to extract the name.
         """
-        # https://github.com/sabnzbd/sabnzbd/blob/02b4a116dd4b46b2d2f33f7bbf249f2294458f2e/sabnzbd/nzbstuff.py#L104-L106
-        if parsed := re.search(r'"([^"]*)"', self.subject):
-            return parsed.group(1).strip()
-        elif parsed := re.search(
-            r"\b([\w\-+()' .,]+(?:\[[\w\-/+()' .,]*][\w\-+()' .,]*)*\.[A-Za-z0-9]{2,4})\b", self.subject
-        ):
-            return parsed.group(1).strip()
-        else:
-            return ""
+        return subject_to_name(self.subject)
 
     @cached_property
     def stem(self) -> str:
@@ -108,11 +106,7 @@ class File(ParentModel):
         Base name of the file without it's extension extracted from the [`File.name`][nzb._models.File.name].
         May return an empty string if it fails to extract the stem.
         """
-        if not self.name:
-            return ""
-        else:
-            root, _ = splitext(self.name)
-            return root if root else ""
+        return name_to_stem(self.name)
 
     @cached_property
     def suffix(self) -> str:
@@ -120,91 +114,25 @@ class File(ParentModel):
         Extension of the file extracted from the [`File.name`][nzb._models.File.name].
         May return an empty string if it fails to extract the extension.
         """
-        if not self.name:
-            return ""
-        else:
-            _, ext = splitext(self.name)
-            return ext if ext else ""
+        return name_to_suffix(self.name)
 
-    @cached_property
     def is_par2(self) -> bool:
         """
         Return `True` if the file is a `.par2` file, `False` otherwise.
         """
-        if not self.name:
-            return False
-        else:
-            parsed = re.search(r"\.par2$", self.name, re.IGNORECASE)
-            return True if parsed else False
+        return name_is_par2(self.name)
 
-    @cached_property
     def is_rar(self) -> bool:
         """
         Return `True` if the file is a `.rar` file, `False` otherwise.
         """
-        if not self.name:
-            return False
-        else:
-            parsed = re.search(r"(\.rar|\.r\d\d|\.s\d\d|\.t\d\d|\.u\d\d|\.v\d\d)$", self.name, re.IGNORECASE)
-            return True if parsed else False
+        return name_is_rar(self.name)
 
-    @cached_property
-    def is_obfuscated(self) -> bool:  # pragma: no cover
+    def is_obfuscated(self) -> bool:
         """
         Return `True` if the file is obfuscated, `False` otherwise.
         """
-        filestem = self.stem
-
-        if not filestem:
-            return True
-
-        # First: the patterns that are certainly obfuscated:
-
-        # ...blabla.H.264/b082fa0beaa644d3aa01045d5b8d0b36.mkv is certainly obfuscated
-        if re.findall(r"^[a-f0-9]{32}$", filestem):
-            # exactly 32 hex digits, so:
-            return True
-
-        # 0675e29e9abfd2.f7d069dab0b853283cc1b069a25f82.6547
-        if re.findall(r"^[a-f0-9.]{40,}$", filestem):
-            return True
-
-        # "[BlaBla] something [More] something 5937bc5e32146e.bef89a622e4a23f07b0d3757ad5e8a.a02b264e [Brrr]"
-        # So: square brackets plus 30+ hex digit
-        if re.findall(r"[a-f0-9]{30}", filestem) and len(re.findall(r"\[\w+\]", filestem)) >= 2:
-            return True
-
-        # /some/thing/abc.xyz.a4c567edbcbf27.BLA is certainly obfuscated
-        if re.findall(r"^abc\.xyz", filestem):
-            # ... which we consider as obfuscated:
-            return True
-
-        # Then: patterns that are not obfuscated but typical, clear names:
-
-        # these are signals for the obfuscation versus non-obfuscation
-        decimals = sum(1 for c in filestem if c.isnumeric())
-        upperchars = sum(1 for c in filestem if c.isupper())
-        lowerchars = sum(1 for c in filestem if c.islower())
-        spacesdots = sum(1 for c in filestem if c == " " or c == "." or c == "_")  # space-like symbols
-
-        # Example: "Great Distro"
-        if upperchars >= 2 and lowerchars >= 2 and spacesdots >= 1:
-            return False
-
-        # Example: "this is a download"
-        if spacesdots >= 3:
-            return False
-
-        # Example: "Beast 2020"
-        if (upperchars + lowerchars >= 4) and decimals >= 4 and spacesdots >= 1:
-            return False
-
-        # Example: "Catullus", starts with a capital, and most letters are lower case
-        if filestem[0].isupper() and lowerchars > 2 and upperchars / lowerchars <= 0.25:
-            return False
-
-        # Finally: default to obfuscated:
-        return True  # default is obfuscated
+        return name_is_obfuscated(self.stem)
 
 
 class NZB(ParentModel):
@@ -274,32 +202,28 @@ class NZB(ParentModel):
         """
         Percentage of recovery based on the total `.par2` size divided by the total size of all files.
         """
-        return (sum(file.size for file in self.files if file.is_par2) / self.size) * 100
+        return (sum(file.size for file in self.files if file.is_par2()) / self.size) * 100
 
-    @cached_property
     def has_rar(self) -> bool:
         """
         Return `True` if any file in the NZB is a `.rar` file, `False` otherwise.
         """
-        return any(file.is_rar for file in self.files)
+        return any(file.is_rar() for file in self.files)
 
-    @cached_property
     def is_rar(self) -> bool:
         """
         Return `True` if all files in the NZB are `.rar` files, `False` otherwise.
         """
-        return all(file.is_rar for file in self.files)
+        return all(file.is_rar() for file in self.files)
 
-    @cached_property
     def is_obfuscated(self) -> bool:
         """
         Return `True` if any file in the NZB is obfuscated, `False` otherwise.
         """
-        return any(file.is_obfuscated for file in self.files)
+        return any(file.is_obfuscated() for file in self.files)
 
-    @cached_property
     def has_par2(self) -> bool:
         """
         Return `True` if there's at least one `.par2` file in the NZB, `False` otherwise.
         """
-        return any(file.is_par2 for file in self.files)
+        return any(file.is_par2() for file in self.files)

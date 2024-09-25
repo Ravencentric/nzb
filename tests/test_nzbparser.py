@@ -19,8 +19,8 @@ def test_spec_example_nzb() -> None:
     assert nzb.meta.tag == "HD"
     assert nzb.meta.category == "TV"
     assert len(nzb.files) == 1
-    assert nzb.is_rar is True
-    assert nzb.is_obfuscated is True
+    assert nzb.is_rar() is True
+    assert nzb.is_obfuscated() is True
     assert nzb.file.name == "abc-mr2a.r01"
     assert nzb.file.stem == "abc-mr2a"
     assert nzb.file.suffix == ".r01"
@@ -45,9 +45,9 @@ def test_big_buck_bunny() -> None:
     assert nzb.meta.tag is None
     assert nzb.meta.category is None
     assert len(nzb.files) == 5
-    assert nzb.is_rar is False
-    assert nzb.is_obfuscated is False
-    assert nzb.has_par2 is True
+    assert nzb.is_rar() is False
+    assert nzb.is_obfuscated() is False
+    assert nzb.has_par2() is True
     assert nzb.file.name == "Big Buck Bunny - S01E01.mkv"
     assert nzb.file.stem == "Big Buck Bunny - S01E01"
     assert nzb.file.suffix == ".mkv"
@@ -146,11 +146,11 @@ def test_bad_subject() -> None:
     assert nzb.files[0].name == ""
     assert nzb.files[0].stem == ""
     assert nzb.files[0].suffix == ""
-    assert nzb.files[0].is_par2 is False
-    assert nzb.files[0].is_rar is False
-    assert nzb.is_rar is False
-    assert nzb.has_par2 is False
-    assert nzb.is_obfuscated is True
+    assert nzb.files[0].is_par2() is False
+    assert nzb.files[0].is_rar() is False
+    assert nzb.is_rar() is False
+    assert nzb.has_par2() is False
+    assert nzb.is_obfuscated() is True
 
 
 def test_non_standard_meta() -> None:
@@ -163,13 +163,13 @@ def test_non_standard_meta() -> None:
 
 def test_single_rar_nzb() -> None:
     nzb = NZBParser.from_file(nzbs / "one_rar_file.nzb").parse()
-    assert nzb.has_rar is True
-    assert nzb.is_rar is False
-    assert nzb.has_par2 is False
+    assert nzb.has_rar() is True
+    assert nzb.is_rar() is False
+    assert nzb.has_par2() is False
 
 
 def test_multi_rar_nzb() -> None:
     nzb = NZBParser.from_file(nzbs / "multi_rar.nzb").parse()
-    assert nzb.has_rar is True
-    assert nzb.is_rar is True
-    assert nzb.has_par2 is False
+    assert nzb.has_rar() is True
+    assert nzb.is_rar() is True
+    assert nzb.has_par2() is False
