@@ -3,6 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
+
 from nzb import InvalidNZBError, NZBMetaEditor, NZBParser
 
 nzbs = Path("tests/__nzbs__/")

@@ -1,4 +1,4 @@
 ::: nzb.NZB
-::: nzb.Metadata
+::: nzb.Meta
 ::: nzb.Segment
 ::: nzb.File

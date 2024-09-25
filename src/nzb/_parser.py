@@ -6,16 +6,15 @@ https://web.archive.org/web/20240709113825/https://sabnzbd.org/wiki/extra/nzb-sp
 from __future__ import annotations
 
 import re
-from typing import Any, Union, cast
+from typing import Any, TypeAlias, Union, cast
 
 from natsort import natsorted
-from typing_extensions import TypeAlias
 
 from nzb._exceptions import InvalidNZBError
-from nzb._models import File, Metadata, Segment
+from nzb._models import File, Meta, Segment
 
 
-def parse_metadata(nzb: dict[str, Any]) -> Metadata:
+def parse_metadata(nzb: dict[str, Any]) -> Meta:
     """
     Parses the <meta>...</meta> field present in an NZB.
 
@@ -46,9 +45,9 @@ def parse_metadata(nzb: dict[str, Any]) -> Metadata:
     meta = cast(MetaFieldType, meta)
 
     if meta is None:
-        # Metadata is optional, so we will not error
+        # Meta is optional, so we will not error
         # just return an instance with all values set to None
-        return Metadata()
+        return Meta()
 
     if isinstance(meta, dict):
         meta = [meta]
@@ -62,11 +61,6 @@ def parse_metadata(nzb: dict[str, Any]) -> Metadata:
     for item in meta:
         if item.get("@type", "").casefold() == "title":
             title = item.get("#text")
-
-        # This isn't part of the spec, but something
-        # I've noticed being used instead of the `title` field
-        if item.get("@type", "").casefold() == "name":
-            name = item.get("#text")
 
         if item.get("@type", "").casefold() == "password":
             # spec allows for multiple passwords by repeating the same field
@@ -87,7 +81,7 @@ def parse_metadata(nzb: dict[str, Any]) -> Metadata:
         if item.get("@type", "").casefold() == "category":
             category = item.get("#text")
 
-    return Metadata(
+    return Meta(
         title=title or name,
         passwords=passwordset if passwordset else None,  # type: ignore
         tags=tagset if tagset else None,  # type: ignore

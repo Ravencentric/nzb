@@ -1,21 +1,26 @@
 from __future__ import annotations
 
-import re
 from functools import cached_property
-from os.path import splitext
 
 from natsort import natsorted
 from pydantic import BaseModel, ByteSize, ConfigDict
 
-from nzb._helpers import _is_obfuscated, _is_par2, _is_rar
 from nzb._types import UTCDateTime
+from nzb._utils import (
+    name_is_obfuscated,
+    name_is_par2,
+    name_is_rar,
+    name_to_stem,
+    name_to_suffix,
+    subject_to_name,
+)
 
 
 class ParentModel(BaseModel):
     model_config = ConfigDict(frozen=True, str_strip_whitespace=True)
 
 
-class Metadata(ParentModel):
+class Meta(ParentModel):
     """Optional creator-definable metadata for the contents of the NZB."""
 
     title: str | None = None
@@ -33,7 +38,7 @@ class Metadata(ParentModel):
     @cached_property
     def password(self) -> str | None:
         """
-        Return the first password from [`Metadata.passwords`][nzb._models.Metadata.passwords]
+        Return the first password from [`Meta.passwords`][nzb._models.Meta.passwords]
         if it exists, None otherwise.
 
         This is essentially just syntactic sugar for `password = passwords[0] if passwords else None`
@@ -44,7 +49,7 @@ class Metadata(ParentModel):
     @cached_property
     def tag(self) -> str | None:
         """
-        The first tag from [`Metadata.tags`][nzb._models.Metadata.tags]
+        The first tag from [`Meta.tags`][nzb._models.Meta.tags]
         if it exists, None otherwise.
 
         This is essentially just syntactic sugar for `tag = tags[0] if tags else None`
@@ -93,15 +98,7 @@ class File(ParentModel):
         Complete name of the file with it's extension extracted from the subject.
         May return an empty string if it fails to extract the name.
         """
-        # https://github.com/sabnzbd/sabnzbd/blob/02b4a116dd4b46b2d2f33f7bbf249f2294458f2e/sabnzbd/nzbstuff.py#L104-L106
-        if parsed := re.search(r'"([^"]*)"', self.subject):
-            return parsed.group(1).strip()
-        elif parsed := re.search(
-            r"\b([\w\-+()' .,]+(?:\[[\w\-/+()' .,]*][\w\-+()' .,]*)*\.[A-Za-z0-9]{2,4})\b", self.subject
-        ):
-            return parsed.group(1).strip()
-        else:
-            return ""
+        return subject_to_name(self.subject)
 
     @cached_property
     def stem(self) -> str:
@@ -109,11 +106,7 @@ class File(ParentModel):
         Base name of the file without it's extension extracted from the [`File.name`][nzb._models.File.name].
         May return an empty string if it fails to extract the stem.
         """
-        if not self.name:
-            return ""
-        else:
-            root, _ = splitext(self.name)
-            return root if root else ""
+        return name_to_stem(self.name)
 
     @cached_property
     def suffix(self) -> str:
@@ -121,35 +114,31 @@ class File(ParentModel):
         Extension of the file extracted from the [`File.name`][nzb._models.File.name].
         May return an empty string if it fails to extract the extension.
         """
-        if not self.name:
-            return ""
-        else:
-            _, ext = splitext(self.name)
-            return ext if ext else ""
+        return name_to_suffix(self.name)
 
     def is_par2(self) -> bool:
         """
         Return `True` if the file is a `.par2` file, `False` otherwise.
         """
-        return _is_par2(self.name)
+        return name_is_par2(self.name)
 
     def is_rar(self) -> bool:
         """
         Return `True` if the file is a `.rar` file, `False` otherwise.
         """
-        return _is_rar(self.name)
+        return name_is_rar(self.name)
 
     def is_obfuscated(self) -> bool:
         """
         Return `True` if the file is obfuscated, `False` otherwise.
         """
-        return _is_obfuscated(self.stem)
+        return name_is_obfuscated(self.stem)
 
 
 class NZB(ParentModel):
     """Represents a complete NZB file."""
 
-    metadata: Metadata = Metadata()
+    meta: Meta = Meta()
     """Optional creator-definable metadata for the contents of the NZB."""
 
     files: tuple[File, ...]
@@ -208,6 +197,13 @@ class NZB(ParentModel):
 
         return tuple(natsorted(groupset))
 
+    @cached_property
+    def par2_percentage(self) -> float:
+        """
+        Percentage of recovery based on the total `.par2` size divided by the total size of all files.
+        """
+        return (sum(file.size for file in self.files if file.is_par2()) / self.size) * 100
+
     def has_rar(self) -> bool:
         """
         Return `True` if any file in the NZB is a `.rar` file, `False` otherwise.
@@ -231,9 +227,3 @@ class NZB(ParentModel):
         Return `True` if there's at least one `.par2` file in the NZB, `False` otherwise.
         """
         return any(file.is_par2() for file in self.files)
-
-    def get_par2_percentage(self) -> float:
-        """
-        Percentage of recovery based on the total `.par2` size divided by the total size of all files.
-        """
-        return (sum(file.size for file in self.files if file.is_par2()) / self.size) * 100
