@@ -146,7 +146,11 @@ class NZB(ParentModel):
 
     @cached_property
     def file(self) -> File:
-        """The main content file (episode, movie, etc) in the NZB."""
+        """
+        The main content file (episode, movie, etc) in the NZB.
+        This is determined by finding the largest file in the NZB
+        and may not always be accurate.
+        """
         return max(self.files, key=lambda file: file.size)
 
     @cached_property
@@ -198,11 +202,18 @@ class NZB(ParentModel):
         return tuple(natsorted(groupset))
 
     @cached_property
-    def par2_percentage(self) -> float:
+    def recovery_size(self) -> ByteSize:
+        """
+        Total size of all the `.par2` files.
+        """
+        return ByteSize(sum(file.size for file in self.files if file.is_par2()))
+
+    @cached_property
+    def recovery_percentage(self) -> float:
         """
         Percentage of recovery based on the total `.par2` size divided by the total size of all files.
         """
-        return (sum(file.size for file in self.files if file.is_par2()) / self.size) * 100
+        return (self.recovery_size / self.size) * 100
 
     def has_rar(self) -> bool:
         """
