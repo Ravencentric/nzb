@@ -24,27 +24,17 @@ if TYPE_CHECKING:
 class NZBParser:
     def __init__(self, nzb: str, encoding: str | None = "utf-8") -> None:
         """
-        Initialize the NZBParser instance.
+        Initialize the NZBParser.
 
         Parameters
         ----------
         nzb : str
             NZB content as a string.
         encoding : str, optional
-            Encoding of the NZB content, defaults to `utf-8`.
-
-        Raises
-        ------
-        InvalidNZBError
-            Raised if the input is not valid XML.
-            However, being valid XML doesn't guarantee it's a correctly structured NZB.
+            Encoding of the NZB content.
         """
         self.__nzb = nzb
         self.__encoding = encoding
-        try:
-            self.__nzbdict = xmltodict_parse(self.__nzb, encoding=self.__encoding)
-        except ExpatError as error:
-            raise InvalidNZBError(error.args[0])
 
     def parse(self) -> NZB:
         """
@@ -60,8 +50,13 @@ class NZBParser:
         InvalidNZBError
             Raised if the input is not valid NZB.
         """
-        meta = parse_metadata(self.__nzbdict)
-        files = parse_files(self.__nzbdict)
+        try:
+            nzbdict = xmltodict_parse(self.__nzb, encoding=self.__encoding)
+        except ExpatError as error:
+            raise InvalidNZBError(error.args[0])
+
+        meta = parse_metadata(nzbdict)
+        files = parse_files(nzbdict)
 
         return NZB(meta=meta, files=files)
 

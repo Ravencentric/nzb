@@ -7,11 +7,11 @@ from pydantic import BaseModel, ByteSize, ConfigDict
 
 from nzb._types import UTCDateTime
 from nzb._utils import (
-    name_is_obfuscated,
     name_is_par2,
     name_is_rar,
     name_to_stem,
     name_to_suffix,
+    stem_is_obfuscated,
     subject_to_name,
 )
 
@@ -132,7 +132,7 @@ class File(ParentModel):
         """
         Return `True` if the file is obfuscated, `False` otherwise.
         """
-        return name_is_obfuscated(self.stem)
+        return stem_is_obfuscated(self.stem)
 
 
 class NZB(ParentModel):

@@ -165,7 +165,7 @@ def name_is_rar(filename: str) -> bool:
 
 
 @cache
-def name_is_obfuscated(filestem: str) -> bool:  # pragma: no cover
+def stem_is_obfuscated(filestem: str) -> bool:  # pragma: no cover
     """
     Determine if a given file stem is likely obfuscated.
 
