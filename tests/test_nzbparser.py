@@ -69,6 +69,7 @@ def test_big_buck_bunny() -> None:
     assert set(nzb.suffixes) == {".mkv", ".par2"}
     assert set(nzb.posters) == {"John <nzb@nowhere.example>"}
     assert set(nzb.groups) == {"alt.binaries.boneless"}
+    assert nzb.par2_size == 5183128
     assert nzb.par2_percentage == pytest.approx(22, 1.0)
     assert nzb.file == File(
         poster="John <nzb@nowhere.example>",

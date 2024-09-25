@@ -202,18 +202,18 @@ class NZB(ParentModel):
         return tuple(natsorted(groupset))
 
     @cached_property
-    def recovery_size(self) -> ByteSize:
+    def par2_size(self) -> ByteSize:
         """
         Total size of all the `.par2` files.
         """
         return ByteSize(sum(file.size for file in self.files if file.is_par2()))
 
     @cached_property
-    def recovery_percentage(self) -> float:
+    def par2_percentage(self) -> float:
         """
-        Percentage of recovery based on the total `.par2` size divided by the total size of all files.
+        Percentage of the size of all the `.par2` files relative to the total size.
         """
-        return (self.recovery_size / self.size) * 100
+        return (self.par2_size / self.size) * 100
 
     def has_rar(self) -> bool:
         """
