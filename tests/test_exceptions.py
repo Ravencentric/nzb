@@ -68,22 +68,15 @@ def test_saving_overwrite() -> None:
 
 def test_parsing_invalid_nzb() -> None:
     with pytest.raises(InvalidNZBError):
-        NZBParser(invalid_xml)
-
-    # No error here because __init__ only checks if it's a valid XML
-    assert NZBParser(valid_xml_but_invalid_nzb)._NZBParser__nzbdict  # type: ignore
+        NZBParser(invalid_xml).parse()
 
     with pytest.raises(InvalidNZBError):
-        # Error here because parse() does additional checks
         NZBParser(valid_xml_but_invalid_nzb).parse()
 
 
 def test_editing_invalid_nzb() -> None:
     with pytest.raises(InvalidNZBError):
         NZBMetaEditor(invalid_xml)
-
-    # No error here because unlike the parser, editor does not care if your input is a valid nzb or not
-    assert NZBMetaEditor(valid_xml_but_invalid_nzb)._NZBMetaEditor__nzbdict  # type: ignore
 
 
 def test_parser_exceptions() -> None:
