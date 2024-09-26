@@ -67,4 +67,4 @@ Checkout the complete documentation [here](https://nzb.ravencentric.cc/).
 
 ## License
 
-Distributed under the [Unlicense](https://choosealicense.com/licenses/unlicense/) License. See [UNLICENSE](https://github.com/Ravencentric/nzb/blob/main/UNLICENSE) for more information.
+Distributed under the [MIT](https://choosealicense.com/licenses/mit/) License. See [LICENSE](https://github.com/Ravencentric/nzb/blob/main/LICENSE) for more information.

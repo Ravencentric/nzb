@@ -1,10 +1,10 @@
 [project]
 name = "nzb"
-version = "0.2.0"
+version = "0.2.2"
 description = "A spec compliant parser and meta editor for NZB files"
 authors = [{ name = "Ravencentric", email = "me@ravencentric.cc" }]
 readme = "README.md"
-license = { text = "MIT License" }
+license = "MIT"
 requires-python = ">=3.10"
 keywords = ["nzb", "usenet", "parser"]
 classifiers = [
