@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import re
 from functools import cache
-from os.path import splitext
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -49,74 +48,6 @@ def meta_constructor(
         meta.append({"@type": "category", "#text": category})
 
     return meta
-
-
-@cache
-def subject_to_name(subject: str) -> str:
-    """
-    Parse the filename from the file subject.
-
-    Parameters
-    ----------
-    subject : str
-        The raw subject, e.g., `"[1/5] - &quot;Big Buck Bunny - S01E01.mkv&quot; yEnc (1/24) 16981056"`
-
-    Returns
-    -------
-    str
-        The filename, e.g., `Big Buck Bunny - S01E01.mkv`
-    """
-    # https://github.com/sabnzbd/sabnzbd/blob/02b4a116dd4b46b2d2f33f7bbf249f2294458f2e/sabnzbd/nzbstuff.py#L104-L106
-    if parsed := re.search(r'"([^"]*)"', subject):
-        return parsed.group(1).strip()
-    elif parsed := re.search(r"\b([\w\-+()' .,]+(?:\[[\w\-/+()' .,]*][\w\-+()' .,]*)*\.[A-Za-z0-9]{2,4})\b", subject):
-        return parsed.group(1).strip()
-    else:
-        return ""
-
-
-@cache
-def name_to_stem(filename: str) -> str:
-    """
-    Parse the stem from the name.
-
-    Parameters
-    ----------
-    filename : str
-        The filename, e.g., `"Big Buck Bunny - S01E01.mkv"`
-
-    Returns
-    -------
-    str
-        The file stem, e.g., `Big Buck Bunny - S01E01`
-    """
-    if not filename:
-        return ""
-    else:
-        root, _ = splitext(filename)
-        return root if root else ""
-
-
-@cache
-def name_to_suffix(filename: str) -> str:
-    """
-    Parse the suffix from the name.
-
-    Parameters
-    ----------
-    filename : str
-        The filename, e.g., `"Big Buck Bunny - S01E01.mkv"`
-
-    Returns
-    -------
-    str
-        The suffix, e.g., `.mkv`
-    """
-    if not filename:
-        return ""
-    else:
-        _, ext = splitext(filename)
-        return ext if ext else ""
 
 
 @cache

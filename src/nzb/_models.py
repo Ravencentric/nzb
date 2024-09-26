@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+import re
 from functools import cached_property
+from os.path import splitext
 
 from natsort import natsorted
 from pydantic import BaseModel, ByteSize, ConfigDict
@@ -9,10 +11,7 @@ from nzb._types import UTCDateTime
 from nzb._utils import (
     name_is_par2,
     name_is_rar,
-    name_to_stem,
-    name_to_suffix,
     stem_is_obfuscated,
-    subject_to_name,
 )
 
 
@@ -98,7 +97,15 @@ class File(ParentModel):
         Complete name of the file with it's extension extracted from the subject.
         May return an empty string if it fails to extract the name.
         """
-        return subject_to_name(self.subject)
+        # https://github.com/sabnzbd/sabnzbd/blob/02b4a116dd4b46b2d2f33f7bbf249f2294458f2e/sabnzbd/nzbstuff.py#L104-L106
+        if parsed := re.search(r'"([^"]*)"', self.subject):
+            return parsed.group(1).strip()
+        elif parsed := re.search(
+            r"\b([\w\-+()' .,]+(?:\[[\w\-/+()' .,]*][\w\-+()' .,]*)*\.[A-Za-z0-9]{2,4})\b", self.subject
+        ):
+            return parsed.group(1).strip()
+        else:
+            return ""
 
     @cached_property
     def stem(self) -> str:
@@ -106,7 +113,11 @@ class File(ParentModel):
         Base name of the file without it's extension extracted from the [`File.name`][nzb._models.File.name].
         May return an empty string if it fails to extract the stem.
         """
-        return name_to_stem(self.name)
+        if not self.name:
+            return ""
+        else:
+            root, _ = splitext(self.name)
+            return root
 
     @cached_property
     def suffix(self) -> str:
@@ -114,7 +125,11 @@ class File(ParentModel):
         Extension of the file extracted from the [`File.name`][nzb._models.File.name].
         May return an empty string if it fails to extract the extension.
         """
-        return name_to_suffix(self.name)
+        if not self.name:
+            return ""
+        else:
+            _, ext = splitext(self.name)
+            return ext
 
     def is_par2(self) -> bool:
         """
