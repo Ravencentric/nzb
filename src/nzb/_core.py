@@ -22,7 +22,7 @@ if TYPE_CHECKING:
 
 
 class NZBParser:
-    def __init__(self, nzb: str, encoding: str | None = "utf-8") -> None:
+    def __init__(self, nzb: str, *, encoding: str | None = "utf-8") -> None:
         """
         Initialize the NZBParser.
 
@@ -61,7 +61,7 @@ class NZBParser:
         return NZB(meta=meta, files=files)
 
     @classmethod
-    def from_file(cls, nzb: StrPath, encoding: str | None = "utf-8") -> Self:
+    def from_file(cls, nzb: StrPath, *, encoding: str | None = "utf-8") -> Self:
         """
         Create an NZBParser instance from an NZB file path.
 
@@ -78,11 +78,11 @@ class NZBParser:
             An NZBParser instance initialized with the content of the specified NZB file.
         """
         nzb = Path(nzb).expanduser().resolve().read_text(encoding=encoding)
-        return cls(nzb, encoding)
+        return cls(nzb, encoding=encoding)
 
 
 class NZBMetaEditor:
-    def __init__(self, nzb: str, encoding: str = "utf-8") -> None:
+    def __init__(self, nzb: str, *, encoding: str = "utf-8") -> None:
         """
         Initialize the NZBMetaEditor instance.
 
@@ -254,7 +254,7 @@ class NZBMetaEditor:
 
         return self
 
-    def save(self, filename: StrPath | None = None, overwrite: bool = False) -> Path:
+    def save(self, filename: StrPath | None = None, *, overwrite: bool = False) -> Path:
         """
         Save the edited NZB to a file.
 
@@ -325,6 +325,6 @@ class NZBMetaEditor:
             Returns itself.
         """
         data = Path(nzb).expanduser().resolve().read_text(encoding=encoding)
-        instance = cls(data, encoding)
+        instance = cls(data, encoding=encoding)
         setattr(instance, "__nzb_file", nzb)
         return instance
