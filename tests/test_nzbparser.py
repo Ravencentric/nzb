@@ -4,6 +4,7 @@ import datetime
 from pathlib import Path
 
 import pytest
+
 from nzb import File, NZBParser, Segment
 
 nzbs = Path("tests/__nzbs__").resolve()
@@ -11,12 +12,12 @@ nzbs = Path("tests/__nzbs__").resolve()
 
 def test_spec_example_nzb() -> None:
     nzb = NZBParser.from_file(nzbs / "spec_example.nzb").parse()
-    assert nzb.metadata.title == "Your File!"
-    assert nzb.metadata.passwords == ("secret",)
-    assert nzb.metadata.tags == ("HD",)
-    assert nzb.metadata.password == "secret"
-    assert nzb.metadata.tag == "HD"
-    assert nzb.metadata.category == "TV"
+    assert nzb.meta.title == "Your File!"
+    assert nzb.meta.passwords == ("secret",)
+    assert nzb.meta.tags == ("HD",)
+    assert nzb.meta.password == "secret"
+    assert nzb.meta.tag == "HD"
+    assert nzb.meta.category == "TV"
     assert len(nzb.files) == 1
     assert nzb.is_rar() is True
     assert nzb.is_obfuscated() is True
@@ -37,12 +38,12 @@ def test_spec_example_nzb() -> None:
 def test_big_buck_bunny() -> None:
     nzb = NZBParser.from_file(nzbs / "big_buck_bunny.nzb").parse()
 
-    assert nzb.metadata.title is None
-    assert nzb.metadata.passwords is None
-    assert nzb.metadata.tags is None
-    assert nzb.metadata.password is None
-    assert nzb.metadata.tag is None
-    assert nzb.metadata.category is None
+    assert nzb.meta.title is None
+    assert nzb.meta.passwords is None
+    assert nzb.meta.tags is None
+    assert nzb.meta.password is None
+    assert nzb.meta.tag is None
+    assert nzb.meta.category is None
     assert len(nzb.files) == 5
     assert nzb.is_rar() is False
     assert nzb.is_obfuscated() is False
@@ -68,7 +69,8 @@ def test_big_buck_bunny() -> None:
     assert set(nzb.suffixes) == {".mkv", ".par2"}
     assert set(nzb.posters) == {"John <nzb@nowhere.example>"}
     assert set(nzb.groups) == {"alt.binaries.boneless"}
-    assert nzb.get_par2_percentage() == pytest.approx(22, 1.0)
+    assert nzb.par2_size == 5183128
+    assert nzb.par2_percentage == pytest.approx(22, 1.0)
     assert nzb.file == File(
         poster="John <nzb@nowhere.example>",
         datetime=datetime.datetime(2024, 1, 28, 11, 18, 28, tzinfo=datetime.timezone.utc),
@@ -154,10 +156,10 @@ def test_bad_subject() -> None:
 
 def test_non_standard_meta() -> None:
     nzb = NZBParser.from_file(nzbs / "non_standard_meta.nzb").parse()
-    assert nzb.metadata.title == "Your File!"
-    assert nzb.metadata.passwords is None
-    assert nzb.metadata.tags is None
-    assert nzb.metadata.category is None
+    assert nzb.meta.title is None
+    assert nzb.meta.passwords is None
+    assert nzb.meta.tags is None
+    assert nzb.meta.category is None
 
 
 def test_single_rar_nzb() -> None:

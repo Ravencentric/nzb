@@ -7,15 +7,19 @@ from os.path import splitext
 from natsort import natsorted
 from pydantic import BaseModel, ByteSize, ConfigDict
 
-from nzb._helpers import _is_obfuscated, _is_par2, _is_rar
 from nzb._types import UTCDateTime
+from nzb._utils import (
+    name_is_par2,
+    name_is_rar,
+    stem_is_obfuscated,
+)
 
 
 class ParentModel(BaseModel):
     model_config = ConfigDict(frozen=True, str_strip_whitespace=True)
 
 
-class Metadata(ParentModel):
+class Meta(ParentModel):
     """Optional creator-definable metadata for the contents of the NZB."""
 
     title: str | None = None
@@ -33,7 +37,7 @@ class Metadata(ParentModel):
     @cached_property
     def password(self) -> str | None:
         """
-        Return the first password from [`Metadata.passwords`][nzb._models.Metadata.passwords]
+        Return the first password from [`Meta.passwords`][nzb._models.Meta.passwords]
         if it exists, None otherwise.
 
         This is essentially just syntactic sugar for `password = passwords[0] if passwords else None`
@@ -44,7 +48,7 @@ class Metadata(ParentModel):
     @cached_property
     def tag(self) -> str | None:
         """
-        The first tag from [`Metadata.tags`][nzb._models.Metadata.tags]
+        The first tag from [`Meta.tags`][nzb._models.Meta.tags]
         if it exists, None otherwise.
 
         This is essentially just syntactic sugar for `tag = tags[0] if tags else None`
@@ -113,7 +117,7 @@ class File(ParentModel):
             return ""
         else:
             root, _ = splitext(self.name)
-            return root if root else ""
+            return root
 
     @cached_property
     def suffix(self) -> str:
@@ -125,31 +129,31 @@ class File(ParentModel):
             return ""
         else:
             _, ext = splitext(self.name)
-            return ext if ext else ""
+            return ext
 
     def is_par2(self) -> bool:
         """
         Return `True` if the file is a `.par2` file, `False` otherwise.
         """
-        return _is_par2(self.name)
+        return name_is_par2(self.name)
 
     def is_rar(self) -> bool:
         """
         Return `True` if the file is a `.rar` file, `False` otherwise.
         """
-        return _is_rar(self.name)
+        return name_is_rar(self.name)
 
     def is_obfuscated(self) -> bool:
         """
         Return `True` if the file is obfuscated, `False` otherwise.
         """
-        return _is_obfuscated(self.stem)
+        return stem_is_obfuscated(self.stem)
 
 
 class NZB(ParentModel):
     """Represents a complete NZB file."""
 
-    metadata: Metadata = Metadata()
+    meta: Meta = Meta()
     """Optional creator-definable metadata for the contents of the NZB."""
 
     files: tuple[File, ...]
@@ -157,7 +161,11 @@ class NZB(ParentModel):
 
     @cached_property
     def file(self) -> File:
-        """The main content file (episode, movie, etc) in the NZB."""
+        """
+        The main content file (episode, movie, etc) in the NZB.
+        This is determined by finding the largest file in the NZB
+        and may not always be accurate.
+        """
         return max(self.files, key=lambda file: file.size)
 
     @cached_property
@@ -208,6 +216,20 @@ class NZB(ParentModel):
 
         return tuple(natsorted(groupset))
 
+    @cached_property
+    def par2_size(self) -> ByteSize:
+        """
+        Total size of all the `.par2` files.
+        """
+        return ByteSize(sum(file.size for file in self.files if file.is_par2()))
+
+    @cached_property
+    def par2_percentage(self) -> float:
+        """
+        Percentage of the size of all the `.par2` files relative to the total size.
+        """
+        return (self.par2_size / self.size) * 100
+
     def has_rar(self) -> bool:
         """
         Return `True` if any file in the NZB is a `.rar` file, `False` otherwise.
@@ -231,9 +253,3 @@ class NZB(ParentModel):
         Return `True` if there's at least one `.par2` file in the NZB, `False` otherwise.
         """
         return any(file.is_par2() for file in self.files)
-
-    def get_par2_percentage(self) -> float:
-        """
-        Percentage of recovery based on the total `.par2` size divided by the total size of all files.
-        """
-        return (sum(file.size for file in self.files if file.is_par2()) / self.size) * 100

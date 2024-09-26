@@ -15,6 +15,12 @@ def test_meta_clear(tmp_path: Path) -> None:
     assert out.read_text(encoding).strip() == edited.read_text(encoding).strip()
 
 
+def test_nzb_with_no_head_clear(tmp_path: Path) -> None:
+    nzb = nzbs / "nzb_with_no_head.nzb"
+    out = NZBMetaEditor.from_file(nzb).clear().save(tmp_path / "nzb_with_no_head.nzb")
+    assert out.is_file()
+
+
 def test_meta_remove_append(tmp_path: Path) -> None:
     edited = nzbs / "spec_example_meta_append.nzb"
     out = (
@@ -37,7 +43,7 @@ def test_meta_append_when_file_has_single_meta(tmp_path: Path) -> None:
         NZBMetaEditor.from_file(nzbs / "single_meta.nzb").append(title="appending").save(tmp_path / "single_meta.nzb")
     )
     parsed = NZBParser.from_file(append).parse()
-    assert parsed.metadata.title == "appending"
+    assert parsed.meta.title == "appending"
 
 
 def test_meta_remove_empty(tmp_path: Path) -> None:
@@ -47,28 +53,28 @@ def test_meta_remove_empty(tmp_path: Path) -> None:
         .save(tmp_path / "spec_example_meta_clear.nzb")
     )
     parsed = NZBParser.from_file(rm).parse()
-    assert parsed.metadata.title is None
-    assert parsed.metadata.passwords is None
-    assert parsed.metadata.tags is None
-    assert parsed.metadata.category is None
+    assert parsed.meta.title is None
+    assert parsed.meta.passwords is None
+    assert parsed.meta.tags is None
+    assert parsed.meta.category is None
 
 
 def test_meta_remove_one(tmp_path: Path) -> None:
     rm = NZBMetaEditor.from_file(nzbs / "single_meta.nzb").remove("title").save(tmp_path / "single_meta.nzb")
     parsed = NZBParser.from_file(rm).parse()
-    assert parsed.metadata.title is None
-    assert parsed.metadata.passwords is None
-    assert parsed.metadata.tags is None
-    assert parsed.metadata.category is None
+    assert parsed.meta.title is None
+    assert parsed.meta.passwords is None
+    assert parsed.meta.tags is None
+    assert parsed.meta.category is None
 
 
 def test_meta_remove_missing_key(tmp_path: Path) -> None:
     rm = NZBMetaEditor.from_file(nzbs / "single_meta.nzb").remove("akldakldjakldjs").save(tmp_path / "single_meta.nzb")
     parsed = NZBParser.from_file(rm).parse()
-    assert parsed.metadata.title is not None
-    assert parsed.metadata.passwords is None
-    assert parsed.metadata.tags is None
-    assert parsed.metadata.category is None
+    assert parsed.meta.title is not None
+    assert parsed.meta.passwords is None
+    assert parsed.meta.tags is None
+    assert parsed.meta.category is None
 
 
 def test_meta_set(tmp_path: Path) -> None:

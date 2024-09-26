@@ -2,45 +2,39 @@ from __future__ import annotations
 
 from collections import OrderedDict
 from pathlib import Path
+from typing import TYPE_CHECKING, Literal, overload
 from xml.parsers.expat import ExpatError
 
-from pydantic import validate_call
-from typing_extensions import Literal, Self, overload
 from xmltodict import parse as xmltodict_parse
 from xmltodict import unparse as xmltodict_unparse
 
 from nzb._exceptions import InvalidNZBError
 from nzb._models import NZB
 from nzb._parser import parse_doctype, parse_files, parse_metadata
-from nzb._types import CollectionOf, StrPath
-from nzb._utils import construct_meta_fields
+from nzb._utils import meta_constructor
+
+if TYPE_CHECKING:
+    from collections.abc import Iterable
+
+    from typing_extensions import Self
+
+    from nzb._types import StrPath
 
 
 class NZBParser:
-    @validate_call
     def __init__(self, nzb: str, encoding: str | None = "utf-8") -> None:
         """
-        Initialize the NZBParser instance.
+        Initialize the NZBParser.
 
         Parameters
         ----------
         nzb : str
             NZB content as a string.
         encoding : str, optional
-            Encoding of the NZB content, defaults to `utf-8`.
-
-        Raises
-        ------
-        InvalidNZBError
-            Raised if the input is not valid XML.
-            However, being valid XML doesn't guarantee it's a correctly structured NZB.
+            Encoding of the NZB content.
         """
         self.__nzb = nzb
         self.__encoding = encoding
-        try:
-            self.__nzbdict = xmltodict_parse(self.__nzb, encoding=self.__encoding)
-        except ExpatError as error:
-            raise InvalidNZBError(error.args[0])
 
     def parse(self) -> NZB:
         """
@@ -56,13 +50,17 @@ class NZBParser:
         InvalidNZBError
             Raised if the input is not valid NZB.
         """
-        metadata = parse_metadata(self.__nzbdict)
-        files = parse_files(self.__nzbdict)
+        try:
+            nzbdict = xmltodict_parse(self.__nzb, encoding=self.__encoding)
+        except ExpatError as error:
+            raise InvalidNZBError(error.args[0])
 
-        return NZB(metadata=metadata, files=files)
+        meta = parse_metadata(nzbdict)
+        files = parse_files(nzbdict)
+
+        return NZB(meta=meta, files=files)
 
     @classmethod
-    @validate_call
     def from_file(cls, nzb: StrPath, encoding: str | None = "utf-8") -> Self:
         """
         Create an NZBParser instance from an NZB file path.
@@ -84,7 +82,6 @@ class NZBParser:
 
 
 class NZBMetaEditor:
-    @validate_call
     def __init__(self, nzb: str, encoding: str = "utf-8") -> None:
         """
         Initialize the NZBMetaEditor instance.
@@ -120,13 +117,12 @@ class NZBMetaEditor:
         """
         return self.__nzbdict.get("nzb", {}).get("head", {}).get("meta")  # type: ignore
 
-    @validate_call
     def set(
         self,
         *,
         title: str | None = None,
-        passwords: CollectionOf[str] | str | None = None,
-        tags: CollectionOf[str] | str | None = None,
+        passwords: Iterable[str] | str | None = None,
+        tags: Iterable[str] | str | None = None,
         category: str | None = None,
     ) -> Self:
         """
@@ -137,9 +133,9 @@ class NZBMetaEditor:
         ----------
         title : str, optional
             The title metadata field.
-        passwords : CollectionOf[str] | str, optional
+        passwords : Iterable[str] | str, optional
             Password(s) for the NZB file.
-        tags : CollectionOf[str] | str, optional
+        tags : Iterable[str] | str, optional
             Tag(s) associated with the NZB file.
         category : str, optional
             Category of the NZB file.
@@ -156,18 +152,17 @@ class NZBMetaEditor:
         nzb = OrderedDict(self.__nzbdict["nzb"])
 
         nzb["head"] = {}
-        nzb["head"]["meta"] = construct_meta_fields(title=title, passwords=passwords, tags=tags, category=category)
+        nzb["head"]["meta"] = meta_constructor(title=title, passwords=passwords, tags=tags, category=category)
         nzb.move_to_end("file")
         self.__nzbdict["nzb"] = nzb
         return self
 
-    @validate_call
     def append(
         self,
         *,
         title: str | None = None,
-        passwords: CollectionOf[str] | str | None = None,
-        tags: CollectionOf[str] | str | None = None,
+        passwords: Iterable[str] | str | None = None,
+        tags: Iterable[str] | str | None = None,
         category: str | None = None,
     ) -> Self:
         """
@@ -177,9 +172,9 @@ class NZBMetaEditor:
         ----------
         title : str, optional
             The title metadata field.
-        passwords : CollectionOf[str] | str, optional
+        passwords : Iterable[str] | str, optional
             Password(s) for the NZB file.
-        tags : CollectionOf[str] | str, optional
+        tags : Iterable[str] | str, optional
             Tag(s) associated with the NZB file.
         category : str, optional
             Category of the NZB file.
@@ -197,11 +192,11 @@ class NZBMetaEditor:
 
         elif isinstance(meta, dict):
             new_meta = [meta]
-            new_meta.extend(construct_meta_fields(title=title, passwords=passwords, tags=tags, category=category))
+            new_meta.extend(meta_constructor(title=title, passwords=passwords, tags=tags, category=category))
             self.__nzbdict["nzb"]["head"]["meta"] = new_meta
 
         else:
-            meta.extend(construct_meta_fields(title=title, passwords=passwords, tags=tags, category=category))
+            meta.extend(meta_constructor(title=title, passwords=passwords, tags=tags, category=category))
             self.__nzbdict["nzb"]["head"]["meta"] = meta
 
         return self
@@ -212,7 +207,6 @@ class NZBMetaEditor:
     @overload
     def remove(self, key: str) -> Self: ...
 
-    @validate_call
     def remove(self, key: Literal["title", "password", "tag", "category"] | str) -> Self:
         """
         Remove a metadata field from the NZB.
@@ -255,12 +249,11 @@ class NZBMetaEditor:
         """
         try:
             del self.__nzbdict["nzb"]["head"]
-        except KeyError:  # pragma: no cover
+        except KeyError:
             pass
 
         return self
 
-    @validate_call
     def save(self, filename: StrPath | None = None, overwrite: bool = False) -> Path:
         """
         Save the edited NZB to a file.
@@ -315,7 +308,6 @@ class NZBMetaEditor:
         return outfile
 
     @classmethod
-    @validate_call
     def from_file(cls, nzb: StrPath, encoding: str = "utf-8") -> Self:
         """
         Create an NZBMetaEditor instance from an NZB file path.
