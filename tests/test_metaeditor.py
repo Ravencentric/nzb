@@ -15,6 +15,12 @@ def test_meta_clear(tmp_path: Path) -> None:
     assert out.read_text(encoding).strip() == edited.read_text(encoding).strip()
 
 
+def test_nzb_with_no_head_clear(tmp_path: Path) -> None:
+    nzb = nzbs / "nzb_with_no_head.nzb"
+    out = NZBMetaEditor.from_file(nzb).clear().save(tmp_path / "nzb_with_no_head.nzb")
+    assert out.is_file()
+
+
 def test_meta_remove_append(tmp_path: Path) -> None:
     edited = nzbs / "spec_example_meta_append.nzb"
     out = (

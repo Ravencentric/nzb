@@ -249,7 +249,7 @@ class NZBMetaEditor:
         """
         try:
             del self.__nzbdict["nzb"]["head"]
-        except KeyError:  # pragma: no cover
+        except KeyError:
             pass
 
         return self
