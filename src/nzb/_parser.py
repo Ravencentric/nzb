@@ -55,7 +55,6 @@ def parse_metadata(nzb: dict[str, Any]) -> Meta:
     passwordset = set()
     tagset = set()
     title = None
-    name = None
     category = None
 
     for item in meta:
@@ -82,7 +81,7 @@ def parse_metadata(nzb: dict[str, Any]) -> Meta:
             category = item.get("#text")
 
     return Meta(
-        title=title or name,
+        title=title,
         passwords=passwordset if passwordset else None,  # type: ignore
         tags=tagset if tagset else None,  # type: ignore
         category=category,
