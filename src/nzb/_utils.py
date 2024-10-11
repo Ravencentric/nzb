@@ -2,11 +2,11 @@ from __future__ import annotations
 
 import re
 from functools import cache
+from pathlib import Path
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
-    from pathlib import Path
     from typing import Callable, ParamSpec, TypeVar
 
     from nzb._types import StrPath
