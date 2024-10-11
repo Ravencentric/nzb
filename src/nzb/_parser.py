@@ -16,7 +16,7 @@ from nzb._models import File, Meta, Segment
 
 def parse_metadata(nzb: dict[str, Any]) -> Meta:
     """
-    Parses the <meta>...</meta> field present in an NZB.
+    Parses the `<meta>...</meta>` field present in an NZB.
 
     ```xml
     <?xml version="1.0" encoding="iso-8859-1" ?>
@@ -90,7 +90,7 @@ def parse_metadata(nzb: dict[str, Any]) -> Meta:
 
 def parse_segments(segmentdict: dict[str, list[dict[str, str]] | dict[str, str] | None] | None) -> tuple[Segment, ...]:
     """
-    Parses the <segments>...</segments> field present in an NZB.
+    Parses the `<segments>...</segments>` field present in an NZB.
 
     There's 3 possible things that we can get here:
     - A list of dictionaries if there's more than 1 segment field present
@@ -140,7 +140,7 @@ def parse_segments(segmentdict: dict[str, list[dict[str, str]] | dict[str, str] 
 
 def parse_files(nzb: dict[str, Any]) -> tuple[File, ...]:
     """
-    Parses the <file>...</file> field present in an NZB.
+    Parses the `<file>...</file>` field present in an NZB.
 
     ```xml
     <?xml version="1.0" encoding="iso-8859-1" ?>
@@ -158,7 +158,7 @@ def parse_files(nzb: dict[str, Any]) -> tuple[File, ...]:
     # There's 3 possible things that we can get from the above here:
     # - A list of dictionaries if there's more than 1 file field present, i.e, list[dict[str, str]]
     # - A dictionary if there's only one file field present, i.e, dict[str, str]
-    # - None if there's no meta field
+    # - None if there's no file field
 
     # Here's the type representation of the three possible cases that we need to handle
     FileFieldType: TypeAlias = Union[list[dict[str, str]], dict[str, str], None]

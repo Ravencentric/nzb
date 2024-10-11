@@ -11,7 +11,7 @@ from xmltodict import unparse as xmltodict_unparse
 from nzb._exceptions import InvalidNZBError
 from nzb._models import NZB
 from nzb._parser import parse_doctype, parse_files, parse_metadata
-from nzb._utils import meta_constructor
+from nzb._utils import meta_constructor, realpath
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
@@ -77,7 +77,7 @@ class NZBParser:
         NZBParser
             An NZBParser instance initialized with the content of the specified NZB file.
         """
-        nzb = Path(nzb).expanduser().resolve().read_text(encoding=encoding)
+        nzb = realpath(nzb).read_text(encoding=encoding)
         return cls(nzb, encoding=encoding)
 
 
@@ -280,18 +280,18 @@ class NZBMetaEditor:
             If the file exists and overwrite is `False`.
         """
 
-        filename_from_self: Path | None = getattr(self, "__nzb_file", None)
+        self_filename: Path | None = getattr(self, "__nzb_file", None)
 
         if filename is None:
-            if filename_from_self is None:
+            if self_filename is None:
                 raise FileNotFoundError("No filename specified!")
             else:
                 if overwrite:
-                    outfile = filename_from_self
+                    outfile = self_filename
                 else:
-                    raise FileExistsError(filename_from_self)
+                    raise FileExistsError(self_filename)
         else:
-            outfile = Path(filename).resolve()
+            outfile = realpath(filename)
 
         outfile.parent.mkdir(parents=True, exist_ok=True)
         unparsed = xmltodict_unparse(self.__nzbdict, encoding=self.__encoding, pretty=True, indent="    ")
@@ -324,7 +324,8 @@ class NZBMetaEditor:
         Self
             Returns itself.
         """
-        data = Path(nzb).expanduser().resolve().read_text(encoding=encoding)
+        __nzb_file = realpath(nzb)
+        data = __nzb_file.read_text(encoding=encoding)
         instance = cls(data, encoding=encoding)
-        setattr(instance, "__nzb_file", nzb)
+        setattr(instance, "__nzb_file", __nzb_file)
         return instance

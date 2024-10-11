@@ -14,7 +14,7 @@ class InvalidNZBError(NZBException):
         super().__init__(message)
 
     def __str__(self) -> str:
-        """Equivalent to accessing the .member attribute"""
+        """Equivalent to accessing the .message attribute"""
         return self.message
 
     def __repr__(self) -> str:

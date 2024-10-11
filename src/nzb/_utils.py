@@ -6,13 +6,23 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
+    from pathlib import Path
     from typing import Callable, ParamSpec, TypeVar
+
+    from nzb._types import StrPath
 
     T = TypeVar("T")
     P = ParamSpec("P")
 
     def cache(user_function: Callable[P, T], /) -> Callable[P, T]:  # type: ignore
         return user_function
+
+
+def realpath(path: StrPath, /) -> Path:
+    """
+    Canonicalize a given path.
+    """
+    return Path(path).expanduser().resolve()
 
 
 def meta_constructor(
