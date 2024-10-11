@@ -37,10 +37,7 @@ jobs:
         id: setup-uv
         uses: astral-sh/setup-uv@v3
 
-      - name: Install Python ${{ matrix.python-version }}
-        run: uv python install ${{ matrix.python-version }}
-
-      - name: Install the project
+      - name: Install the project with Python ${{ matrix.python-version }}
         run: uv sync --all-extras --python ${{ matrix.python-version }}
 
       - name: Run tests and generate coverage
