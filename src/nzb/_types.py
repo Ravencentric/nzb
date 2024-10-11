@@ -2,11 +2,9 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 from os import PathLike
-from typing import Annotated, TypeAlias, TypeVar, Union
+from typing import Annotated, TypeAlias, Union
 
 from pydantic import AfterValidator
-
-T = TypeVar("T")
 
 StrPath: TypeAlias = Union[str, PathLike[str]]
 """String or pathlib.Path"""
