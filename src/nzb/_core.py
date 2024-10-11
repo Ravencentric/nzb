@@ -308,7 +308,7 @@ class NZBMetaEditor:
         return outfile
 
     @classmethod
-    def from_file(cls, nzb: StrPath, encoding: str = "utf-8") -> Self:
+    def from_file(cls, nzb: StrPath, *, encoding: str = "utf-8") -> Self:
         """
         Create an NZBMetaEditor instance from an NZB file path.
 
