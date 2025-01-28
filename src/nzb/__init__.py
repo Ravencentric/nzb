@@ -1,19 +1,17 @@
 from __future__ import annotations
 
-from nzb._core import NZBMetaEditor, NZBParser
-from nzb._exceptions import InvalidNZBError, NZBException
-from nzb._models import NZB, File, Meta, Segment
-from nzb._version import __version__, __version_tuple__
+from nzb._core import Nzb, NzbMetaEditor
+from nzb._exceptions import InvalidNzbError
+from nzb._models import File, Meta, Segment
+
+__version__ = "0.3.0"
 
 __all__ = (
-    "NZBParser",
-    "NZBMetaEditor",
+    "NzbMetaEditor",
     "Meta",
     "File",
     "Segment",
-    "NZB",
-    "NZBException",
-    "InvalidNZBError",
+    "Nzb",
+    "InvalidNzbError",
     "__version__",
-    "__version_tuple__",
 )

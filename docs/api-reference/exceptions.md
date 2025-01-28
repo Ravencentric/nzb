@@ -1,4 +1,4 @@
 ::: nzb.NZBException
-::: nzb.InvalidNZBError
+::: nzb.InvalidNzbError
     options:
         members: true

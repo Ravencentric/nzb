@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from nzb import InvalidNZBError, NZBMetaEditor, NZBParser
+from nzb import InvalidNzbError, Nzb, NzbMetaEditor
 
 nzbs = Path("tests/__nzbs__/")
 
@@ -49,45 +49,45 @@ valid_xml_but_invalid_nzb = """\
 def test_invalid_nzb_error() -> None:
     try:
         message = "Missing something in the NZB"
-        raise InvalidNZBError(message)
-    except InvalidNZBError as error:
+        raise InvalidNzbError(message)
+    except InvalidNzbError as error:
         assert error.message == message
         assert str(error) == message
-        assert repr(error) == 'InvalidNZBError("Missing something in the NZB")'
+        assert repr(error) == 'InvalidNzbError("Missing something in the NZB")'
 
 
 def test_saving_without_filename() -> None:
     with pytest.raises(FileNotFoundError):
-        NZBMetaEditor((nzbs / "spec_example.nzb").read_text()).save()
+        NzbMetaEditor((nzbs / "spec_example.nzb").read_text()).save()
 
 
 def test_saving_overwrite() -> None:
     with pytest.raises(FileExistsError):
-        NZBMetaEditor.from_file(nzbs / "spec_example.nzb").save()
+        NzbMetaEditor.from_file(nzbs / "spec_example.nzb").save()
 
 
 def test_parsing_invalid_nzb() -> None:
-    with pytest.raises(InvalidNZBError):
-        NZBParser(invalid_xml).parse()
+    with pytest.raises(InvalidNzbError):
+        Nzb.from_str(invalid_xml)
 
-    with pytest.raises(InvalidNZBError):
-        NZBParser(valid_xml_but_invalid_nzb).parse()
+    with pytest.raises(InvalidNzbError):
+        Nzb.from_str(valid_xml_but_invalid_nzb)
 
 
 def test_editing_invalid_nzb() -> None:
-    with pytest.raises(InvalidNZBError):
-        NZBMetaEditor(invalid_xml)
+    with pytest.raises(InvalidNzbError):
+        NzbMetaEditor(invalid_xml)
 
 
 def test_parser_exceptions() -> None:
-    with pytest.raises(InvalidNZBError):
-        NZBParser.from_file(nzbs / "malformed_files.nzb").parse()
+    with pytest.raises(InvalidNzbError):
+        Nzb.from_file(nzbs / "malformed_files.nzb")
 
-    with pytest.raises(InvalidNZBError):
-        NZBParser.from_file(nzbs / "malformed_files2.nzb").parse()
+    with pytest.raises(InvalidNzbError):
+        Nzb.from_file(nzbs / "malformed_files2.nzb")
 
-    with pytest.raises(InvalidNZBError):
-        NZBParser.from_file(nzbs / "malformed_groups.nzb").parse()
+    with pytest.raises(InvalidNzbError):
+        Nzb.from_file(nzbs / "malformed_groups.nzb")
 
-    with pytest.raises(InvalidNZBError):
-        NZBParser.from_file(nzbs / "malformed_segments.nzb").parse()
+    with pytest.raises(InvalidNzbError):
+        Nzb.from_file(nzbs / "malformed_segments.nzb")

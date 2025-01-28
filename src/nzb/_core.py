@@ -1,15 +1,17 @@
 from __future__ import annotations
 
 from collections import OrderedDict
+from functools import cached_property
 from pathlib import Path
 from typing import TYPE_CHECKING, Literal, overload
 from xml.parsers.expat import ExpatError
 
+from natsort import natsorted
 from xmltodict import parse as xmltodict_parse
 from xmltodict import unparse as xmltodict_unparse
 
-from nzb._exceptions import InvalidNZBError
-from nzb._models import NZB
+from nzb._exceptions import InvalidNzbError
+from nzb._models import File, Meta, ParentModel
 from nzb._parser import parse_doctype, parse_files, parse_metadata
 from nzb._utils import meta_constructor, realpath
 
@@ -21,70 +23,195 @@ if TYPE_CHECKING:
     from nzb._types import StrPath
 
 
-class NZBParser:
-    def __init__(self, nzb: str, *, encoding: str | None = "utf-8") -> None:
+class Nzb(ParentModel):
+    """Represents a complete NZB file."""
+
+    meta: Meta = Meta()
+    """Optional creator-definable metadata for the contents of the NZB."""
+
+    files: tuple[File, ...]
+    """File objects representing the files included in the NZB."""
+
+    @cached_property
+    def file(self) -> File:
         """
-        Initialize the NZBParser.
+        The main content file (episode, movie, etc) in the NZB.
+        This is determined by finding the largest file in the NZB
+        and may not always be accurate.
+        """
+        return max(self.files, key=lambda file: file.size)
+
+    @classmethod
+    def from_str(cls, nzb: str, /) -> Self:
+        """
+        Parse the given string into an [`Nzb`][Nzb].
 
         Parameters
         ----------
         nzb : str
-            NZB content as a string.
-        encoding : str, optional
-            Encoding of the NZB content.
-        """
-        self.__nzb = nzb
-        self.__encoding = encoding
-
-    def parse(self) -> NZB:
-        """
-        Parse the NZB.
+            NZB string.
 
         Returns
         -------
-        NZB
-            NZB object representing the parsed NZB file.
+        Nzb
+            Object representing the parsed NZB file.
 
         Raises
         ------
-        InvalidNZBError
-            Raised if the input is not valid NZB.
+        InvalidNzbError
+            Raised if the NZB is invalid.
+
         """
         try:
-            nzbdict = xmltodict_parse(self.__nzb, encoding=self.__encoding)
+            nzbdict = xmltodict_parse(nzb)
         except ExpatError as error:
-            raise InvalidNZBError(error.args[0])
+            raise InvalidNzbError(error.args[0])
 
         meta = parse_metadata(nzbdict)
         files = parse_files(nzbdict)
 
-        return NZB(meta=meta, files=files)
+        return cls(meta=meta, files=files)
 
     @classmethod
-    def from_file(cls, nzb: StrPath, *, encoding: str | None = "utf-8") -> Self:
+    def from_file(cls, nzb: StrPath, /, *, encoding: str | None = "utf-8") -> Nzb:
         """
-        Create an NZBParser instance from an NZB file path.
+        Parse the given file into an [`Nzb`][Nzb].
 
         Parameters
         ----------
-        nzb : StrPath
-            File path to the NZB.
-        encoding : str, optional
-            Encoding of the NZB, defaults to `utf-8`.
+        nzb : str | PathLike[str]
+            Path to the NZB file.
 
         Returns
         -------
-        NZBParser
-            An NZBParser instance initialized with the content of the specified NZB file.
+        Nzb
+            Object representing the parsed NZB file.
+
+        Raises
+        ------
+        InvalidNzbError
+            Raised if the NZB is invalid.
+
         """
-        nzb = realpath(nzb).read_text(encoding=encoding)
-        return cls(nzb, encoding=encoding)
+        _nzb = realpath(nzb).read_text(encoding=encoding)
+        return cls.from_str(_nzb)
+
+    @classmethod
+    def from_json(cls, json: str, /) -> Nzb:
+        """
+        Deserialize the given JSON string into an [`Nzb`][rnzb.Nzb].
+
+        Parameters
+        ----------
+        json : str
+            JSON string representing the NZB.
+
+        Returns
+        -------
+        Nzb
+            Object representing the parsed NZB file.
+
+        Raises
+        ------
+        InvalidNzbError
+            Raised if the NZB is invalid.
+
+        """
+        return cls.model_validate_json(json)
+
+    def to_json(self, *, pretty: bool = False) -> str:
+        """
+        Serialize the [`Nzb`][Nzb] object into a JSON string.
+
+        Parameters
+        ----------
+        pretty : bool, optional
+            Whether to pretty format the JSON string.
+
+        Returns
+        -------
+        str
+            JSON string representing the NZB.
+
+        """
+        indent = 2 if pretty else None
+        return self.model_dump_json(indent=indent)
+
+    @cached_property
+    def size(self) -> int:
+        """Total size of all the files in the NZB."""
+        return sum(file.size for file in self.files)
+
+    @cached_property
+    def filenames(self) -> tuple[str, ...]:
+        """
+        Tuple of unique file names across all the files in the NZB.
+        May return an empty tuple if it fails to extract the name for every file.
+        """
+        return tuple(natsorted({file.name for file in self.files if file.name is not None}))
+
+    @cached_property
+    def posters(self) -> tuple[str, ...]:
+        """
+        Tuple of unique posters across all the files in the NZB.
+        """
+        return tuple(natsorted({file.poster for file in self.files}))
+
+    @cached_property
+    def groups(self) -> tuple[str, ...]:
+        """
+        Tuple of unique groups across all the files in the NZB.
+        """
+        groupset: set[str] = set()
+
+        for file in self.files:
+            groupset.update(file.groups)
+
+        return tuple(natsorted(groupset))
+
+    @cached_property
+    def par2_size(self) -> int:
+        """
+        Total size of all the `.par2` files.
+        """
+        return sum(file.size for file in self.files if file.is_par2())
+
+    @cached_property
+    def par2_percentage(self) -> float:
+        """
+        Percentage of the size of all the `.par2` files relative to the total size.
+        """
+        return (self.par2_size / self.size) * 100
+
+    def has_rar(self) -> bool:
+        """
+        Return `True` if any file in the NZB is a `.rar` file, `False` otherwise.
+        """
+        return any(file.is_rar() for file in self.files)
+
+    def is_rar(self) -> bool:
+        """
+        Return `True` if all files in the NZB are `.rar` files, `False` otherwise.
+        """
+        return all(file.is_rar() for file in self.files)
+
+    def is_obfuscated(self) -> bool:
+        """
+        Return `True` if any file in the NZB is obfuscated, `False` otherwise.
+        """
+        return any(file.is_obfuscated() for file in self.files)
+
+    def has_par2(self) -> bool:
+        """
+        Return `True` if there's at least one `.par2` file in the NZB, `False` otherwise.
+        """
+        return any(file.is_par2() for file in self.files)
 
 
-class NZBMetaEditor:
+class NzbMetaEditor:
     def __init__(self, nzb: str, *, encoding: str = "utf-8") -> None:
         """
-        Initialize the NZBMetaEditor instance.
+        Initialize the  instance.
 
         Parameters
         ----------
@@ -95,7 +222,7 @@ class NZBMetaEditor:
 
         Raises
         ------
-        InvalidNZBError
+        InvalidNzbError
             Raised if the input is not valid XML.
             However, being valid XML doesn't guarantee it's a correctly structured NZB.
         """
@@ -104,7 +231,7 @@ class NZBMetaEditor:
         try:
             self.__nzbdict = xmltodict_parse(self.__nzb, encoding=self.__encoding)
         except ExpatError as error:
-            raise InvalidNZBError(error.args[0])
+            raise InvalidNzbError(error.args[0])
 
     def __get_meta(self) -> list[dict[str, str]] | dict[str, str] | None:
         """
@@ -310,7 +437,7 @@ class NZBMetaEditor:
     @classmethod
     def from_file(cls, nzb: StrPath, *, encoding: str = "utf-8") -> Self:
         """
-        Create an NZBMetaEditor instance from an NZB file path.
+        Create an NzBMetaEditor instance from an NZB file path.
 
         Parameters
         ----------

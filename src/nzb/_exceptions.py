@@ -1,11 +1,7 @@
 from __future__ import annotations
 
 
-class NZBException(Exception):
-    """Base exception for all nzb exceptions"""
-
-
-class InvalidNZBError(NZBException):
+class InvalidNzbError(Exception):
     """Invalid NZB"""
 
     def __init__(self, message: str) -> None:

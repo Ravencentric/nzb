@@ -5,25 +5,23 @@ from pathlib import Path
 
 import pytest
 
-from nzb import File, NZBParser, Segment
+from nzb import File, Nzb, Segment
 
 nzbs = Path("tests/__nzbs__").resolve()
 
 
 def test_spec_example_nzb() -> None:
-    nzb = NZBParser.from_file(nzbs / "spec_example.nzb").parse()
+    nzb = Nzb.from_file(nzbs / "spec_example.nzb")
     assert nzb.meta.title == "Your File!"
     assert nzb.meta.passwords == ("secret",)
     assert nzb.meta.tags == ("HD",)
-    assert nzb.meta.password == "secret"
-    assert nzb.meta.tag == "HD"
     assert nzb.meta.category == "TV"
     assert len(nzb.files) == 1
     assert nzb.is_rar() is True
     assert nzb.is_obfuscated() is True
     assert nzb.file.name == "abc-mr2a.r01"
     assert nzb.file.stem == "abc-mr2a"
-    assert nzb.file.suffix == ".r01"
+    assert nzb.file.extension == "r01"
     assert nzb.size == 106895
     assert len(nzb.files[0].segments) == 2
     assert set(nzb.files[0].segments) == set(
@@ -36,13 +34,11 @@ def test_spec_example_nzb() -> None:
 
 
 def test_big_buck_bunny() -> None:
-    nzb = NZBParser.from_file(nzbs / "big_buck_bunny.nzb").parse()
+    nzb = Nzb.from_file(nzbs / "big_buck_bunny.nzb")
 
     assert nzb.meta.title is None
-    assert nzb.meta.passwords is None
-    assert nzb.meta.tags is None
-    assert nzb.meta.password is None
-    assert nzb.meta.tag is None
+    assert nzb.meta.passwords == ()
+    assert nzb.meta.tags == ()
     assert nzb.meta.category is None
     assert len(nzb.files) == 5
     assert nzb.is_rar() is False
@@ -50,30 +46,29 @@ def test_big_buck_bunny() -> None:
     assert nzb.has_par2() is True
     assert nzb.file.name == "Big Buck Bunny - S01E01.mkv"
     assert nzb.file.stem == "Big Buck Bunny - S01E01"
-    assert nzb.file.suffix == ".mkv"
+    assert nzb.file.extension == "mkv"
     assert nzb.size == 22704889
-    assert set(nzb.names) == {
-        "Big Buck Bunny - S01E01.mkv.vol03+04.par2",
-        "Big Buck Bunny - S01E01.mkv.vol01+02.par2",
+    assert [file.subject for file in nzb.files] == [
+        '[1/5] - "Big Buck Bunny - S01E01.mkv" yEnc (1/24) 16981056',
+        '[2/5] - "Big Buck Bunny - S01E01.mkv.par2" yEnc (1/1) 920',
+        '[3/5] - "Big Buck Bunny - S01E01.mkv.vol00+01.par2" yEnc (1/2) 717788',
+        '[4/5] - "Big Buck Bunny - S01E01.mkv.vol01+02.par2" yEnc (1/3) 1434656',
+        '[5/5] - "Big Buck Bunny - S01E01.mkv.vol03+04.par2" yEnc (1/5) 2869192',
+    ]
+    assert nzb.filenames == (
+        "Big Buck Bunny - S01E01.mkv",
         "Big Buck Bunny - S01E01.mkv.par2",
-        "Big Buck Bunny - S01E01.mkv",
         "Big Buck Bunny - S01E01.mkv.vol00+01.par2",
-    }
-    assert set(nzb.stems) == {
-        "Big Buck Bunny - S01E01",
-        "Big Buck Bunny - S01E01.mkv",
-        "Big Buck Bunny - S01E01.mkv.vol01+02",
-        "Big Buck Bunny - S01E01.mkv.vol03+04",
-        "Big Buck Bunny - S01E01.mkv.vol00+01",
-    }
-    assert set(nzb.suffixes) == {".mkv", ".par2"}
-    assert set(nzb.posters) == {"John <nzb@nowhere.example>"}
-    assert set(nzb.groups) == {"alt.binaries.boneless"}
+        "Big Buck Bunny - S01E01.mkv.vol01+02.par2",
+        "Big Buck Bunny - S01E01.mkv.vol03+04.par2",
+    )
+    assert nzb.posters == ("John <nzb@nowhere.example>",)
+    assert nzb.groups == ("alt.binaries.boneless",)
     assert nzb.par2_size == 5183128
     assert nzb.par2_percentage == pytest.approx(22, 1.0)
     assert nzb.file == File(
         poster="John <nzb@nowhere.example>",
-        datetime=datetime.datetime(2024, 1, 28, 11, 18, 28, tzinfo=datetime.timezone.utc),
+        posted_at=datetime.datetime(2024, 1, 28, 11, 18, 28, tzinfo=datetime.timezone.utc),
         subject='[1/5] - "Big Buck Bunny - S01E01.mkv" yEnc (1/24) 16981056',
         groups=("alt.binaries.boneless",),
         segments=(
@@ -106,11 +101,26 @@ def test_big_buck_bunny() -> None:
 
 
 def test_valid_nzb_with_one_missing_segment() -> None:
-    nzb = NZBParser.from_file(nzbs / "valid_nzb_with_one_missing_segment.nzb").parse()
+    nzb = Nzb.from_file(nzbs / "valid_nzb_with_one_missing_segment.nzb")
+
+    assert [file.subject for file in nzb.files] == [
+        '[1/5] - "Big Buck Bunny - S01E01.mkv" yEnc (1/24) 16981056',
+        '[2/5] - "Big Buck Bunny - S01E01.mkv.par2" yEnc (1/1) 920',
+        '[3/5] - "Big Buck Bunny - S01E01.mkv.vol00+01.par2" yEnc (1/2) 717788',
+        '[4/5] - "Big Buck Bunny - S01E01.mkv.vol01+02.par2" yEnc (1/3) 1434656',
+        '[5/5] - "Big Buck Bunny - S01E01.mkv.vol03+04.par2" yEnc (1/5) 2869192',
+    ]
+    assert nzb.filenames == (
+        "Big Buck Bunny - S01E01.mkv",
+        "Big Buck Bunny - S01E01.mkv.par2",
+        "Big Buck Bunny - S01E01.mkv.vol00+01.par2",
+        "Big Buck Bunny - S01E01.mkv.vol01+02.par2",
+        "Big Buck Bunny - S01E01.mkv.vol03+04.par2",
+    )
 
     assert nzb.file == File(
         poster="John <nzb@nowhere.example>",
-        datetime=datetime.datetime(2024, 1, 28, 11, 18, 28, tzinfo=datetime.timezone.utc),
+        posted_at=datetime.datetime(2024, 1, 28, 11, 18, 28, tzinfo=datetime.timezone.utc),
         subject='[1/5] - "Big Buck Bunny - S01E01.mkv" yEnc (1/24) 16981056',
         groups=("alt.binaries.boneless",),
         segments=(
@@ -143,10 +153,10 @@ def test_valid_nzb_with_one_missing_segment() -> None:
 
 
 def test_bad_subject() -> None:
-    nzb = NZBParser.from_file(nzbs / "bad_subject.nzb").parse()
-    assert nzb.files[0].name == ""
-    assert nzb.files[0].stem == ""
-    assert nzb.files[0].suffix == ""
+    nzb = Nzb.from_file(nzbs / "bad_subject.nzb")
+    assert nzb.files[0].name is None
+    assert nzb.files[0].stem is None
+    assert nzb.files[0].extension is None
     assert nzb.files[0].is_par2() is False
     assert nzb.files[0].is_rar() is False
     assert nzb.is_rar() is False
@@ -155,22 +165,22 @@ def test_bad_subject() -> None:
 
 
 def test_non_standard_meta() -> None:
-    nzb = NZBParser.from_file(nzbs / "non_standard_meta.nzb").parse()
+    nzb = Nzb.from_file(nzbs / "non_standard_meta.nzb")
     assert nzb.meta.title is None
-    assert nzb.meta.passwords is None
-    assert nzb.meta.tags is None
+    assert nzb.meta.passwords == ()
+    assert nzb.meta.tags == ()
     assert nzb.meta.category is None
 
 
 def test_single_rar_nzb() -> None:
-    nzb = NZBParser.from_file(nzbs / "one_rar_file.nzb").parse()
+    nzb = Nzb.from_file(nzbs / "one_rar_file.nzb")
     assert nzb.has_rar() is True
     assert nzb.is_rar() is False
     assert nzb.has_par2() is False
 
 
 def test_multi_rar_nzb() -> None:
-    nzb = NZBParser.from_file(nzbs / "multi_rar.nzb").parse()
+    nzb = Nzb.from_file(nzbs / "multi_rar.nzb")
     assert nzb.has_rar() is True
     assert nzb.is_rar() is True
     assert nzb.has_par2() is False

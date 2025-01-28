@@ -10,7 +10,7 @@ from typing import Any, TypeAlias, Union, cast
 
 from natsort import natsorted
 
-from nzb._exceptions import InvalidNZBError
+from nzb._exceptions import InvalidNzbError
 from nzb._models import File, Meta, Segment
 
 
@@ -82,8 +82,8 @@ def parse_metadata(nzb: dict[str, Any]) -> Meta:
 
     return Meta(
         title=title,
-        passwords=passwordset if passwordset else None,  # type: ignore
-        tags=tagset if tagset else None,  # type: ignore
+        passwords=passwordset,  # type: ignore
+        tags=tagset,  # type: ignore
         category=category,
     )
 
@@ -115,7 +115,7 @@ def parse_segments(segmentdict: dict[str, list[dict[str, str]] | dict[str, str] 
     segments = segmentdict.get("segment") if segmentdict else None
 
     if segments is None:
-        raise InvalidNZBError("Missing or malformed <segments>...</segments>!")
+        raise InvalidNzbError("Missing or malformed <segments>...</segments>!")
 
     if isinstance(segments, dict):
         segments = [segments]
@@ -167,7 +167,7 @@ def parse_files(nzb: dict[str, Any]) -> tuple[File, ...]:
     files = cast(FileFieldType, files)
 
     if files is None:
-        raise InvalidNZBError("Missing or malformed <file>...</file>!")
+        raise InvalidNzbError("Missing or malformed <file>...</file>!")
 
     if isinstance(files, dict):
         files = [files]
@@ -190,7 +190,7 @@ def parse_files(nzb: dict[str, Any]) -> tuple[File, ...]:
         groups = cast(GroupFieldType, groups)
 
         if groups is None:
-            raise InvalidNZBError("Missing or malformed <groups>...</groups>!")
+            raise InvalidNzbError("Missing or malformed <groups>...</groups>!")
 
         if isinstance(groups, str):
             groupset.add(groups)
@@ -200,12 +200,15 @@ def parse_files(nzb: dict[str, Any]) -> tuple[File, ...]:
         fileset.add(
             File(
                 poster=file.get("@poster"),
-                datetime=file.get("@date"),
+                posted_at=file.get("@date"),
                 subject=file.get("@subject"),
                 groups=natsorted(groupset),  # type: ignore
                 segments=parse_segments(file.get("segments")),
             )
         )
+
+    if not fileset:
+        raise InvalidNzbError("Missing or malformed <file>...</file>!")
 
     return tuple(natsorted(fileset, key=lambda file: file.subject))
 
