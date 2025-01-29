@@ -242,7 +242,7 @@ class NzbMetaEditor:
         list[dict[str, str]] | dict[str, str] | None
             The metadata as a list of dictionaries, a single dictionary, or `None` if not found.
         """
-        return self.__nzbdict.get("nzb", {}).get("head", {}).get("meta")  # type: ignore
+        return self.__nzbdict.get("nzb", {}).get("head", {}).get("meta")  # type: ignore[no-any-return]
 
     def set(
         self,

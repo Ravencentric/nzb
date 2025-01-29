@@ -52,8 +52,8 @@ def parse_metadata(nzb: dict[str, Any]) -> Meta:
     if isinstance(meta, dict):
         meta = [meta]
 
-    passwordset = set()
-    tagset = set()
+    passwords: list[str] = []
+    tags: list[str] = []
     title = None
     category = None
 
@@ -67,7 +67,7 @@ def parse_metadata(nzb: dict[str, Any]) -> Meta:
             # <meta type="password">secret2</meta>
             # <meta type="password">secret3</meta>
             if password := item.get("#text"):
-                passwordset.add(password)
+                passwords.append(password)
 
         if item.get("@type", "").casefold() == "tag":
             # spec allows for multiple tags by repeating the same field
@@ -75,15 +75,15 @@ def parse_metadata(nzb: dict[str, Any]) -> Meta:
             # <meta type="tag">Anime</meta>
             # <meta type="tag">1080p</meta>
             if tag := item.get("#text"):
-                tagset.add(tag.strip())
+                tags.append(tag.strip())
 
         if item.get("@type", "").casefold() == "category":
             category = item.get("#text")
 
     return Meta(
         title=title,
-        passwords=passwordset,  # type: ignore
-        tags=tagset,  # type: ignore
+        passwords=passwords,  # type: ignore[arg-type]
+        tags=tags,  # type: ignore[arg-type]
         category=category,
     )
 
@@ -120,7 +120,7 @@ def parse_segments(segmentdict: dict[str, list[dict[str, str]] | dict[str, str] 
     if isinstance(segments, dict):
         segments = [segments]
 
-    segmentset: set[Segment] = set()
+    segmentlist: list[Segment] = []
 
     for segment in segments:
         try:
@@ -133,9 +133,9 @@ def parse_segments(segmentdict: dict[str, list[dict[str, str]] | dict[str, str] 
             # segments don't invalidate the nzb.
             continue
 
-        segmentset.add(Segment(size=size, number=number, message_id=message_id))  # type: ignore
+        segmentlist.append(Segment(size=size, number=number, message_id=message_id))  # type: ignore[arg-type]
 
-    return tuple(natsorted(segmentset, key=lambda seg: seg.number))
+    return tuple(natsorted(segmentlist, key=lambda seg: seg.number))
 
 
 def parse_files(nzb: dict[str, Any]) -> tuple[File, ...]:
@@ -172,10 +172,10 @@ def parse_files(nzb: dict[str, Any]) -> tuple[File, ...]:
     if isinstance(files, dict):
         files = [files]
 
-    fileset: set[File] = set()
+    filelist: list[File] = []
 
     for file in files:
-        groupset: set[str] = set()
+        grouplist: list[str] = []
 
         groups = file.get("groups").get("group") if file.get("groups") else None
         # There's 3 possible things that we can get from the above here:
@@ -193,24 +193,26 @@ def parse_files(nzb: dict[str, Any]) -> tuple[File, ...]:
             raise InvalidNzbError("Missing or malformed <groups>...</groups>!")
 
         if isinstance(groups, str):
-            groupset.add(groups)
+            grouplist.append(groups)
         else:
-            groupset.update(groups)
+            grouplist.extend(groups)
 
-        fileset.add(
+        filelist.append(
             File(
                 poster=file.get("@poster"),
                 posted_at=file.get("@date"),
                 subject=file.get("@subject"),
-                groups=natsorted(groupset),  # type: ignore
+                groups=natsorted(grouplist),  # type: ignore[arg-type]
                 segments=parse_segments(file.get("segments")),
             )
         )
 
-    if not fileset:
+    if not filelist:  # pragma: no cover
+        # I cannot think of any case where this will ever be raised
+        # but just in case
         raise InvalidNzbError("Missing or malformed <file>...</file>!")
 
-    return tuple(natsorted(fileset, key=lambda file: file.subject))
+    return tuple(natsorted(filelist, key=lambda file: file.subject))
 
 
 def parse_doctype(nzb: str) -> str | None:

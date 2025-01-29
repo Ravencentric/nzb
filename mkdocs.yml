@@ -1,7 +1,7 @@
 # Project information
 site_name: nzb
 site_author: Ravencentric
-site_description: A spec compliant parser and meta editor for NZB files
+site_description: A spec compliant parser and meta editor for NZB files.
 
 # Repository
 repo_name: nzb

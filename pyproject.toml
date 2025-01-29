@@ -1,7 +1,7 @@
 [project]
 name = "nzb"
 version = "0.3.0"
-description = "A spec compliant parser and meta editor for NZB files"
+description = "A spec compliant parser and meta editor for NZB files."
 authors = [{ name = "Ravencentric", email = "me@ravencentric.cc" }]
 readme = "README.md"
 license = "MIT"
@@ -30,6 +30,7 @@ dev-dependencies = [
   "mkdocstrings[python]>=0.26.1",
   "mypy>=1.11.2",
   "pytest>=8.3.3",
+  "rnzb>=0.3.1",
   "ruff>=0.6.7",
   "types-xmltodict>=0.13.0.3",
   "typing-extensions>=4.12.2",
@@ -48,9 +49,14 @@ required-imports = ["from __future__ import annotations"]
 [tool.mypy]
 strict = true
 pretty = true
+files = ["src/**/*.py", "tests/**/*.py"]
+enable_error_code = ["ignore-without-code"]
 
-[tool.coverage.run]
-omit = ["src/nzb/_version.py"]
+[tool.pytest.ini_options]
+addopts = ["-ra", "--showlocals", "--strict-markers", "--strict-config"]
+filterwarnings = ["error"]
+log_cli_level = "info"
+testpaths = ["tests"]
 
 [tool.coverage.report]
 exclude_also = [

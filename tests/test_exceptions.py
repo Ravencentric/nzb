@@ -6,7 +6,7 @@ import pytest
 
 from nzb import InvalidNzbError, Nzb, NzbMetaEditor
 
-nzbs = Path("tests/__nzbs__/")
+NZB_DIR = Path(__file__).parent.resolve() / "__nzbs__"
 
 invalid_xml = """\
 <?xml version="1.0" encoding="iso-8859-1" ?>
@@ -58,36 +58,42 @@ def test_invalid_nzb_error() -> None:
 
 def test_saving_without_filename() -> None:
     with pytest.raises(FileNotFoundError):
-        NzbMetaEditor((nzbs / "spec_example.nzb").read_text()).save()
+        NzbMetaEditor((NZB_DIR / "spec_example.nzb").read_text()).save()
 
 
 def test_saving_overwrite() -> None:
     with pytest.raises(FileExistsError):
-        NzbMetaEditor.from_file(nzbs / "spec_example.nzb").save()
+        NzbMetaEditor.from_file(NZB_DIR / "spec_example.nzb").save()
 
 
-def test_parsing_invalid_nzb() -> None:
-    with pytest.raises(InvalidNzbError):
-        Nzb.from_str(invalid_xml)
-
-    with pytest.raises(InvalidNzbError):
-        Nzb.from_str(valid_xml_but_invalid_nzb)
+@pytest.mark.parametrize(
+    "input_xml, expected_error",
+    [
+        pytest.param(invalid_xml, "no element found: line 20, column 0", id="truncated_xml"),
+        pytest.param(
+            valid_xml_but_invalid_nzb, "Missing or malformed <segments>...</segments>!", id="missing_segments"
+        ),
+    ],
+)
+def test_parsing_invalid_nzb(input_xml: str, expected_error: str) -> None:
+    with pytest.raises(InvalidNzbError, match=expected_error):
+        Nzb.from_str(input_xml)
 
 
 def test_editing_invalid_nzb() -> None:
-    with pytest.raises(InvalidNzbError):
+    with pytest.raises(InvalidNzbError, match="no element found: line 20, column 0"):
         NzbMetaEditor(invalid_xml)
 
 
-def test_parser_exceptions() -> None:
-    with pytest.raises(InvalidNzbError):
-        Nzb.from_file(nzbs / "malformed_files.nzb")
-
-    with pytest.raises(InvalidNzbError):
-        Nzb.from_file(nzbs / "malformed_files2.nzb")
-
-    with pytest.raises(InvalidNzbError):
-        Nzb.from_file(nzbs / "malformed_groups.nzb")
-
-    with pytest.raises(InvalidNzbError):
-        Nzb.from_file(nzbs / "malformed_segments.nzb")
+@pytest.mark.parametrize(
+    "file_name, expected_error",
+    (
+        ("malformed_files.nzb", "Missing or malformed <file>...</file>!"),
+        ("malformed_files2.nzb", "Missing or malformed <groups>...</groups>!"),
+        ("malformed_groups.nzb", "Missing or malformed <groups>...</groups>!"),
+        ("malformed_segments.nzb", "Missing or malformed <segments>...</segments>!"),
+    ),
+)
+def test_parser_exceptions(file_name: str, expected_error: str) -> None:
+    with pytest.raises(InvalidNzbError, match=expected_error):
+        Nzb.from_file(NZB_DIR / file_name)

@@ -4,14 +4,15 @@ import datetime
 from pathlib import Path
 
 import pytest
+from rnzb import Nzb as RustNzb
 
 from nzb import File, Nzb, Segment
 
-nzbs = Path("tests/__nzbs__").resolve()
+NZB_DIR = Path(__file__).parent.resolve() / "__nzbs__"
 
 
 def test_spec_example_nzb() -> None:
-    nzb = Nzb.from_file(nzbs / "spec_example.nzb")
+    nzb = Nzb.from_file(NZB_DIR / "spec_example.nzb")
     assert nzb.meta.title == "Your File!"
     assert nzb.meta.passwords == ("secret",)
     assert nzb.meta.tags == ("HD",)
@@ -34,7 +35,7 @@ def test_spec_example_nzb() -> None:
 
 
 def test_big_buck_bunny() -> None:
-    nzb = Nzb.from_file(nzbs / "big_buck_bunny.nzb")
+    nzb = Nzb.from_file(NZB_DIR / "big_buck_bunny.nzb")
 
     assert nzb.meta.title is None
     assert nzb.meta.passwords == ()
@@ -101,7 +102,7 @@ def test_big_buck_bunny() -> None:
 
 
 def test_valid_nzb_with_one_missing_segment() -> None:
-    nzb = Nzb.from_file(nzbs / "valid_nzb_with_one_missing_segment.nzb")
+    nzb = Nzb.from_file(NZB_DIR / "valid_nzb_with_one_missing_segment.nzb")
 
     assert [file.subject for file in nzb.files] == [
         '[1/5] - "Big Buck Bunny - S01E01.mkv" yEnc (1/24) 16981056',
@@ -153,7 +154,7 @@ def test_valid_nzb_with_one_missing_segment() -> None:
 
 
 def test_bad_subject() -> None:
-    nzb = Nzb.from_file(nzbs / "bad_subject.nzb")
+    nzb = Nzb.from_file(NZB_DIR / "bad_subject.nzb")
     assert nzb.files[0].name is None
     assert nzb.files[0].stem is None
     assert nzb.files[0].extension is None
@@ -165,7 +166,7 @@ def test_bad_subject() -> None:
 
 
 def test_non_standard_meta() -> None:
-    nzb = Nzb.from_file(nzbs / "non_standard_meta.nzb")
+    nzb = Nzb.from_file(NZB_DIR / "non_standard_meta.nzb")
     assert nzb.meta.title is None
     assert nzb.meta.passwords == ()
     assert nzb.meta.tags == ()
@@ -173,14 +174,44 @@ def test_non_standard_meta() -> None:
 
 
 def test_single_rar_nzb() -> None:
-    nzb = Nzb.from_file(nzbs / "one_rar_file.nzb")
+    nzb = Nzb.from_file(NZB_DIR / "one_rar_file.nzb")
     assert nzb.has_rar() is True
     assert nzb.is_rar() is False
     assert nzb.has_par2() is False
 
 
 def test_multi_rar_nzb() -> None:
-    nzb = Nzb.from_file(nzbs / "multi_rar.nzb")
+    nzb = Nzb.from_file(NZB_DIR / "multi_rar.nzb")
     assert nzb.has_rar() is True
     assert nzb.is_rar() is True
     assert nzb.has_par2() is False
+
+
+@pytest.mark.parametrize(
+    "nzb_file",
+    [
+        "spec_example.nzb",
+        "big_buck_bunny.nzb",
+        "valid_nzb_with_one_missing_segment.nzb",
+        "bad_subject.nzb",
+        "non_standard_meta.nzb",
+        "one_rar_file.nzb",
+        "multi_rar.nzb",
+    ],
+)
+def test_json_roundtrip(nzb_file: str) -> None:
+    nzb_file = NZB_DIR / nzb_file  # type: ignore[assignment]
+
+    original = Nzb.from_file(nzb_file)
+    original_rnzb = RustNzb.from_file(nzb_file)
+
+    serialized = original.to_json()
+    serialized_rnzb = original_rnzb.to_json()
+
+    assert serialized == serialized_rnzb
+
+    deserialized = Nzb.from_json(serialized)
+    deserialized_rnzb = RustNzb.from_json(serialized_rnzb)
+
+    assert original == deserialized
+    assert original_rnzb == deserialized_rnzb

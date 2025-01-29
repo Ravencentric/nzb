@@ -14,7 +14,7 @@ if TYPE_CHECKING:
     T = TypeVar("T")
     P = ParamSpec("P")
 
-    def cache(user_function: Callable[P, T], /) -> Callable[P, T]:  # type: ignore
+    def cache(user_function: Callable[P, T], /) -> Callable[P, T]:  # type: ignore[misc]
         return user_function
 
 
