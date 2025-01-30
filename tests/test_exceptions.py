@@ -66,20 +66,16 @@ def test_parser_bad_encoding() -> None:
         Nzb.from_file(NZB_DIR / "spec_example.nzb", encoding=None)  # type: ignore[arg-type]
 
 
-def test_saving_without_filename() -> None:
-    with pytest.raises(FileNotFoundError):
-        NzbMetaEditor((NZB_DIR / "spec_example.nzb").read_text()).save()
-
-
-def test_saving_overwrite() -> None:
+def test_saving_overwrite(tmp_path: Path) -> None:
     with pytest.raises(FileExistsError):
-        NzbMetaEditor.from_file(NZB_DIR / "spec_example.nzb").save()
+        file = NZB_DIR / "spec_example.nzb"
+        NzbMetaEditor.from_file(file).to_file(file)
 
 
 @pytest.mark.parametrize(
     "input_xml, expected_error",
     [
-        pytest.param(invalid_xml, "no element found: line 20, column 0", id="truncated_xml"),
+        pytest.param(invalid_xml, "no element found: line 19, column 11", id="truncated_xml"),
         pytest.param(
             valid_xml_but_invalid_nzb, "Missing or malformed <segments>...</segments>!", id="missing_segments"
         ),

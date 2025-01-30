@@ -1,1 +1,1 @@
-::: nzb.NZBParser
+::: nzb.Nzb

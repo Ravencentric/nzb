@@ -63,7 +63,18 @@ class Nzb(ParentModel):
 
         """
         try:
-            nzbdict = xmltodict_parse(nzb)
+            # Note: the .strip() is important, otherwise we get an ExpatError:
+            # xml.parsers.expat.ExpatError: XML or text declaration not at start of entity: line 2, column 0
+            # This can be easily reproduced with:
+            #
+            # ```py
+            # text = """
+            # <xml>
+            # """
+            # Nzb.from_str(text)
+            #
+            # ```
+            nzbdict = xmltodict_parse(nzb.strip())
         except ExpatError as error:
             raise InvalidNzbError(error.args[0])
 
@@ -255,15 +266,8 @@ class NzbMetaEditor:
         """
         if not isinstance(encoding, str):
             raise ValueError("encoding must be a valid string!")
-
-        _nzb_file = realpath(nzb)
-        data = _nzb_file.read_text(encoding=encoding)
+        data = realpath(nzb).read_text(encoding=encoding)
         instance = cls(data)
-
-        # Remember the file
-        # This is used in `.save()`
-        instance._nzb_file = _nzb_file  # type: ignore[attr-defined]
-
         return instance
 
     def __get_meta(self) -> list[dict[str, str]] | dict[str, str] | None:
@@ -414,7 +418,27 @@ class NzbMetaEditor:
 
         return self
 
-    def save(self, filename: StrPath | None = None, *, overwrite: bool = False) -> Path:
+    def to_str(self) -> str:
+        """
+        Return the edited NZB as a string.
+
+        Returns
+        -------
+        str
+            Edited NZB.
+
+        """
+        unparsed = xmltodict_unparse(self._nzbdict, encoding="utf-8", pretty=True, indent="    ")
+
+        if doctype := parse_doctype(self._nzb):
+            # see: https://github.com/martinblech/xmltodict/issues/351
+            nzb = unparsed.splitlines()
+            nzb.insert(1, doctype)
+            return "\n".join(nzb)
+
+        return unparsed
+
+    def to_file(self, filename: StrPath, *, overwrite: bool = False) -> Path:
         """
         Save the edited NZB to a file.
 
@@ -422,7 +446,6 @@ class NzbMetaEditor:
         ----------
         filename : StrPath, optional
             Destination path for saving the NZB.
-            If not provided, uses the original file path if available.
             This will also create the path if it doesn't exist already.
         overwrite : bool, optional
             Whether to overwrite the file if it exists, defaults to `False`.
@@ -440,30 +463,11 @@ class NzbMetaEditor:
             If the file exists and overwrite is `False`.
         """
 
-        # This was set in `.from_file()`
-        self_filename: Path | None = getattr(self, "_nzb_file", None)
+        outfile = realpath(filename)
 
-        if filename is None:
-            if self_filename is None:
-                raise FileNotFoundError("No filename specified!")
-            else:
-                if overwrite:
-                    outfile = self_filename
-                else:
-                    raise FileExistsError(self_filename)
-        else:
-            outfile = realpath(filename)
+        if outfile.is_file() and not overwrite:
+            raise FileExistsError(outfile)
 
         outfile.parent.mkdir(parents=True, exist_ok=True)
-        unparsed = xmltodict_unparse(self._nzbdict, encoding="utf-8", pretty=True, indent="    ")
-
-        if doctype := parse_doctype(self._nzb):
-            # see: https://github.com/martinblech/xmltodict/issues/351
-            nzb = unparsed.splitlines(keepends=True)
-            nzb.insert(1, f"{doctype}\n")
-            with open(outfile, "w", encoding="utf-8") as f:
-                f.writelines(nzb)
-        else:
-            outfile.write_text(unparsed, encoding="utf-8")
-
-        return outfile
+        outfile.write_text(self.to_str(), encoding="utf-8")
+        return outfile.resolve()
