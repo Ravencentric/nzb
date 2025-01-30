@@ -44,7 +44,7 @@ class Nzb(ParentModel):
     @classmethod
     def from_str(cls, nzb: str, /) -> Self:
         """
-        Parse the given string into an [`Nzb`][Nzb].
+        Parse the given string into an [`Nzb`][nzb.Nzb].
 
         Parameters
         ----------
@@ -75,7 +75,7 @@ class Nzb(ParentModel):
     @classmethod
     def from_file(cls, nzb: StrPath, /, *, encoding: str | None = "utf-8") -> Nzb:
         """
-        Parse the given file into an [`Nzb`][Nzb].
+        Parse the given file into an [`Nzb`][nzb.Nzb].
 
         Parameters
         ----------
@@ -99,7 +99,7 @@ class Nzb(ParentModel):
     @classmethod
     def from_json(cls, json: str, /) -> Nzb:
         """
-        Deserialize the given JSON string into an [`Nzb`][rnzb.Nzb].
+        Deserialize the given JSON string into an [`Nzb`][nzb.Nzb].
 
         Parameters
         ----------
@@ -121,7 +121,7 @@ class Nzb(ParentModel):
 
     def to_json(self, *, pretty: bool = False) -> str:
         """
-        Serialize the [`Nzb`][Nzb] object into a JSON string.
+        Serialize the [`Nzb`][nzb.Nzb] object into a JSON string.
 
         Parameters
         ----------
