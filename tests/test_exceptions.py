@@ -56,6 +56,16 @@ def test_invalid_nzb_error() -> None:
         assert repr(error) == 'InvalidNzbError("Missing something in the NZB")'
 
 
+def test_meta_editor_bad_encoding() -> None:
+    with pytest.raises(ValueError, match="encoding must be a valid string!"):
+        NzbMetaEditor.from_file(NZB_DIR / "spec_example.nzb", encoding=None)  # type: ignore[arg-type]
+
+
+def test_parser_bad_encoding() -> None:
+    with pytest.raises(ValueError, match="encoding must be a valid string!"):
+        Nzb.from_file(NZB_DIR / "spec_example.nzb", encoding=None)  # type: ignore[arg-type]
+
+
 def test_saving_without_filename() -> None:
     with pytest.raises(FileNotFoundError):
         NzbMetaEditor((NZB_DIR / "spec_example.nzb").read_text()).save()

@@ -73,7 +73,7 @@ class Nzb(ParentModel):
         return cls(meta=meta, files=files)
 
     @classmethod
-    def from_file(cls, nzb: StrPath, /, *, encoding: str | None = "utf-8") -> Nzb:
+    def from_file(cls, nzb: StrPath, /, *, encoding: str = "utf-8") -> Nzb:
         """
         Parse the given file into an [`Nzb`][nzb.Nzb].
 
@@ -81,6 +81,8 @@ class Nzb(ParentModel):
         ----------
         nzb : str | PathLike[str]
             Path to the NZB file.
+        encoding : str, optional
+            The encoding used to open the file.
 
         Returns
         -------
@@ -93,6 +95,9 @@ class Nzb(ParentModel):
             Raised if the NZB is invalid.
 
         """
+        if not isinstance(encoding, str):
+            raise ValueError("encoding must be a valid string!")
+
         _nzb = realpath(nzb).read_text(encoding=encoding)
         return cls.from_str(_nzb)
 
@@ -209,7 +214,7 @@ class Nzb(ParentModel):
 
 
 class NzbMetaEditor:
-    def __init__(self, nzb: str, *, encoding: str = "utf-8") -> None:
+    def __init__(self, nzb: str) -> None:
         """
         Initialize the  instance.
 
@@ -217,8 +222,6 @@ class NzbMetaEditor:
         ----------
         nzb : str
             NZB content as a string.
-        encoding : str, optional
-            Encoding of the NZB content, defaults to `utf-8`.
 
         Raises
         ------
@@ -226,12 +229,42 @@ class NzbMetaEditor:
             Raised if the input is not valid XML.
             However, being valid XML doesn't guarantee it's a correctly structured NZB.
         """
-        self.__nzb = nzb
-        self.__encoding = encoding
+        self._nzb = nzb
         try:
-            self.__nzbdict = xmltodict_parse(self.__nzb, encoding=self.__encoding)
+            self._nzbdict = xmltodict_parse(self._nzb)
         except ExpatError as error:
             raise InvalidNzbError(error.args[0])
+
+    @classmethod
+    def from_file(cls, nzb: StrPath, *, encoding: str = "utf-8") -> Self:
+        """
+        Create an NzbMetaEditor instance from an NZB file path.
+
+        Parameters
+        ----------
+        nzb : StrPath
+            File path to the NZB.
+        encoding : str, optional
+            The encoding used to open the file.
+
+        Returns
+        -------
+        Self
+            Returns itself.
+
+        """
+        if not isinstance(encoding, str):
+            raise ValueError("encoding must be a valid string!")
+
+        _nzb_file = realpath(nzb)
+        data = _nzb_file.read_text(encoding=encoding)
+        instance = cls(data)
+
+        # Remember the file
+        # This is used in `.save()`
+        instance._nzb_file = _nzb_file  # type: ignore[attr-defined]
+
+        return instance
 
     def __get_meta(self) -> list[dict[str, str]] | dict[str, str] | None:
         """
@@ -242,7 +275,7 @@ class NzbMetaEditor:
         list[dict[str, str]] | dict[str, str] | None
             The metadata as a list of dictionaries, a single dictionary, or `None` if not found.
         """
-        return self.__nzbdict.get("nzb", {}).get("head", {}).get("meta")  # type: ignore[no-any-return]
+        return self._nzbdict.get("nzb", {}).get("head", {}).get("meta")  # type: ignore[no-any-return]
 
     def set(
         self,
@@ -276,12 +309,12 @@ class NzbMetaEditor:
         if title is None and passwords is None and tags is None and category is None:
             return self
 
-        nzb = OrderedDict(self.__nzbdict["nzb"])
+        nzb = OrderedDict(self._nzbdict["nzb"])
 
         nzb["head"] = {}
         nzb["head"]["meta"] = meta_constructor(title=title, passwords=passwords, tags=tags, category=category)
         nzb.move_to_end("file")
-        self.__nzbdict["nzb"] = nzb
+        self._nzbdict["nzb"] = nzb
         return self
 
     def append(
@@ -320,11 +353,11 @@ class NzbMetaEditor:
         elif isinstance(meta, dict):
             new_meta = [meta]
             new_meta.extend(meta_constructor(title=title, passwords=passwords, tags=tags, category=category))
-            self.__nzbdict["nzb"]["head"]["meta"] = new_meta
+            self._nzbdict["nzb"]["head"]["meta"] = new_meta
 
         else:
             meta.extend(meta_constructor(title=title, passwords=passwords, tags=tags, category=category))
-            self.__nzbdict["nzb"]["head"]["meta"] = meta
+            self._nzbdict["nzb"]["head"]["meta"] = meta
 
         return self
 
@@ -362,7 +395,7 @@ class NzbMetaEditor:
                 return self
         else:
             new_meta = [row for row in meta if row["@type"] != key]
-            self.__nzbdict["nzb"]["head"]["meta"] = new_meta
+            self._nzbdict["nzb"]["head"]["meta"] = new_meta
             return self
 
     def clear(self) -> Self:
@@ -375,7 +408,7 @@ class NzbMetaEditor:
             Returns itself.
         """
         try:
-            del self.__nzbdict["nzb"]["head"]
+            del self._nzbdict["nzb"]["head"]
         except KeyError:
             pass
 
@@ -407,7 +440,8 @@ class NzbMetaEditor:
             If the file exists and overwrite is `False`.
         """
 
-        self_filename: Path | None = getattr(self, "__nzb_file", None)
+        # This was set in `.from_file()`
+        self_filename: Path | None = getattr(self, "_nzb_file", None)
 
         if filename is None:
             if self_filename is None:
@@ -421,38 +455,15 @@ class NzbMetaEditor:
             outfile = realpath(filename)
 
         outfile.parent.mkdir(parents=True, exist_ok=True)
-        unparsed = xmltodict_unparse(self.__nzbdict, encoding=self.__encoding, pretty=True, indent="    ")
+        unparsed = xmltodict_unparse(self._nzbdict, encoding="utf-8", pretty=True, indent="    ")
 
-        if doctype := parse_doctype(self.__nzb):
+        if doctype := parse_doctype(self._nzb):
             # see: https://github.com/martinblech/xmltodict/issues/351
             nzb = unparsed.splitlines(keepends=True)
             nzb.insert(1, f"{doctype}\n")
-            with open(outfile, "w", encoding=self.__encoding) as f:
+            with open(outfile, "w", encoding="utf-8") as f:
                 f.writelines(nzb)
         else:
-            outfile.write_text(unparsed, encoding=self.__encoding)
+            outfile.write_text(unparsed, encoding="utf-8")
 
         return outfile
-
-    @classmethod
-    def from_file(cls, nzb: StrPath, *, encoding: str = "utf-8") -> Self:
-        """
-        Create an NzBMetaEditor instance from an NZB file path.
-
-        Parameters
-        ----------
-        nzb : StrPath
-            File path to the NZB.
-        encoding : str, optional
-            Encoding of the NZB, defaults to `utf-8`.
-
-        Returns
-        -------
-        Self
-            Returns itself.
-        """
-        __nzb_file = realpath(nzb)
-        data = __nzb_file.read_text(encoding=encoding)
-        instance = cls(data, encoding=encoding)
-        setattr(instance, "__nzb_file", __nzb_file)
-        return instance
