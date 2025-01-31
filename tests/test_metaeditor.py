@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import shutil
+import textwrap
 from pathlib import Path
 
 from nzb import Nzb, NzbMetaEditor
@@ -121,3 +122,54 @@ def test_no_doctype(tmp_path: Path) -> None:
     tmp_nzb: Path = shutil.copy(original, tmp_path / "no_doctype.nzb")
     NzbMetaEditor.from_file(tmp_nzb).to_file(tmp_nzb, overwrite=True)
     assert original.read_text(encoding).strip() == tmp_nzb.read_text(encoding).strip()
+
+
+def test_meta_editor_append_title() -> None:
+    s = textwrap.dedent("""
+    <?xml version="1.0" encoding="UTF-8"?>
+    <!DOCTYPE nzb PUBLIC "-//newzBin//DTD NZB 1.1//EN" "http://www.newzbin.com/DTD/nzb/nzb-1.1.dtd">
+    <nzb xmlns="http://www.newzbin.com/DTD/2003/nzb">
+        <head>
+            <meta type="title">Big Buck Bunny - S01E01.mkv</meta>
+            <meta type="password">secret</meta>
+            <meta type="tag">HD</meta>
+            <meta type="category">TV</meta>
+        </head>
+        <file poster="John &lt;nzb@nowhere.example&gt;" date="1706440708" subject="[1/1] - &quot;Big Buck Bunny - S01E01.mkv&quot; yEnc (1/2) 1478616">
+            <groups>
+                <group>alt.binaries.boneless</group>
+            </groups>
+            <segments>
+                <segment bytes="739067" number="1">9cacde4c986547369becbf97003fb2c5-9483514693959@example</segment>
+                <segment bytes="739549" number="2">70a3a038ce324e618e2751e063d6a036-7285710986748@example</segment>
+            </segments>
+        </file>
+    </nzb>
+    """)
+    editor = NzbMetaEditor(s).append(title="Dupe title", category="Dupe category", tags="1080p", passwords="secret2")
+    assert (
+        editor.to_str()
+        == textwrap.dedent("""
+    <?xml version="1.0" encoding="utf-8"?>
+    <!DOCTYPE nzb PUBLIC "-//newzBin//DTD NZB 1.1//EN" "http://www.newzbin.com/DTD/nzb/nzb-1.1.dtd">
+    <nzb xmlns="http://www.newzbin.com/DTD/2003/nzb">
+        <head>
+            <meta type="title">Dupe title</meta>
+            <meta type="category">Dupe category</meta>
+            <meta type="password">secret</meta>
+            <meta type="password">secret2</meta>
+            <meta type="tag">HD</meta>
+            <meta type="tag">1080p</meta>
+        </head>
+        <file poster="John &lt;nzb@nowhere.example&gt;" date="1706440708" subject='[1/1] - "Big Buck Bunny - S01E01.mkv" yEnc (1/2) 1478616'>
+            <groups>
+                <group>alt.binaries.boneless</group>
+            </groups>
+            <segments>
+                <segment bytes="739067" number="1">9cacde4c986547369becbf97003fb2c5-9483514693959@example</segment>
+                <segment bytes="739549" number="2">70a3a038ce324e618e2751e063d6a036-7285710986748@example</segment>
+            </segments>
+        </file>
+    </nzb>
+    """).strip()
+    )

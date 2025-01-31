@@ -227,7 +227,7 @@ class Nzb(ParentModel):
 class NzbMetaEditor:
     def __init__(self, nzb: str) -> None:
         """
-        Initialize the  instance.
+        Create an NzbMetaEditor instance.
 
         Parameters
         ----------
@@ -237,12 +237,26 @@ class NzbMetaEditor:
         Raises
         ------
         InvalidNzbError
-            Raised if the input is not valid XML.
-            However, being valid XML doesn't guarantee it's a correctly structured NZB.
+            If the string cannot be parsed as valid XML.
+
+        Note
+        ----
+        This does not validate the NZB structure or contents.
         """
         self._nzb = nzb
         try:
-            self._nzbdict = xmltodict_parse(self._nzb)
+            # Note: the .strip() is important, otherwise we get an ExpatError:
+            # xml.parsers.expat.ExpatError: XML or text declaration not at start of entity: line 2, column 0
+            # This can be easily reproduced with:
+            #
+            # ```py
+            # text = """
+            # <xml>
+            # """
+            # Nzb.from_str(text)
+            #
+            # ```
+            self._nzbdict = xmltodict_parse(self._nzb.strip())
         except ExpatError as error:
             raise InvalidNzbError(error.args[0])
 
@@ -352,16 +366,26 @@ class NzbMetaEditor:
         meta = self.__get_meta()
 
         if meta is None:
-            self.set(title=title, passwords=passwords, tags=tags, category=category)
+            return self.set(title=title, passwords=passwords, tags=tags, category=category)
 
-        elif isinstance(meta, dict):
-            new_meta = [meta]
-            new_meta.extend(meta_constructor(title=title, passwords=passwords, tags=tags, category=category))
-            self._nzbdict["nzb"]["head"]["meta"] = new_meta
+        new_meta = [meta] if isinstance(meta, dict) else meta
 
-        else:
-            meta.extend(meta_constructor(title=title, passwords=passwords, tags=tags, category=category))
-            self._nzbdict["nzb"]["head"]["meta"] = meta
+        if title is not None:
+            # There can only ever be one title, so we remove the existing title
+            # before appending the new one.
+            new_meta = [item for item in new_meta if item["@type"].casefold() != "title".casefold()]
+
+        if category is not None:
+            # There can only ever be one category, so we remove the existing title
+            # before appending the new one.
+            new_meta = [item for item in new_meta if item["@type"].casefold() != "category".casefold()]
+
+        new_meta.extend(meta_constructor(title=title, passwords=passwords, tags=tags, category=category))
+        self._nzbdict["nzb"]["head"]["meta"] = sorted(
+            new_meta,
+            # Sort the meta keys in the order: title (0) > category (1) > password (2) > tag (3) > everything else (-1)
+            key=lambda x: {"title": 0, "category": 1, "password": 2, "tag": 3}.get(x["@type"].strip().casefold(), -1),
+        )
 
         return self
 
@@ -436,7 +460,7 @@ class NzbMetaEditor:
             nzb.insert(1, doctype)
             return "\n".join(nzb)
 
-        return unparsed
+        return unparsed.strip()
 
     def to_file(self, filename: StrPath, *, overwrite: bool = False) -> Path:
         """
@@ -457,8 +481,6 @@ class NzbMetaEditor:
 
         Raises
         ------
-        FileNotFoundError
-            If no filename is specified and the original file path is unknown.
         FileExistsError
             If the file exists and overwrite is `False`.
         """

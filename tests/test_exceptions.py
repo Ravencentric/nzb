@@ -87,7 +87,7 @@ def test_parsing_invalid_nzb(input_xml: str, expected_error: str) -> None:
 
 
 def test_editing_invalid_nzb() -> None:
-    with pytest.raises(InvalidNzbError, match="no element found: line 20, column 0"):
+    with pytest.raises(InvalidNzbError, match="no element found: line 19, column 11"):
         NzbMetaEditor(invalid_xml)
 
 

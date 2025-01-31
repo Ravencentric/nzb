@@ -3,9 +3,9 @@
 <nzb xmlns="http://www.newzbin.com/DTD/2003/nzb">
     <head>
         <meta type="title">Your File!</meta>
-        <meta type="tag">HD</meta>
         <meta type="category">TV</meta>
         <meta type="password">new secret!</meta>
+        <meta type="tag">HD</meta>
     </head>
     <file poster="Joe Bloggs &lt;bloggs@nowhere.example&gt;" date="1071674882" subject="Here's your file!  abc-mr2a.r01 (1/2)">
         <groups>
