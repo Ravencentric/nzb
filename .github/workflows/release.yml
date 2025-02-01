@@ -22,19 +22,12 @@ jobs:
         with:
           fetch-depth: 0 # Important for changelog
 
-      - name: Install uv
-        id: setup-uv
-        uses: astral-sh/setup-uv@v3
-
-      - name: Install Python 3.12
-        run: uv python install 3.12
+      - uses: astral-sh/setup-uv@v5
+        with:
+          python-version: "3.13"
 
       - name: Build
         run: uv build
-
-      - uses: actions/attest-build-provenance@v1
-        with:
-          subject-path: "dist/*"
 
       - name: Generate changelog with git-cliff
         uses: tj-actions/git-cliff@v1
@@ -46,7 +39,6 @@ jobs:
       - name: Create Release
         uses: ncipollo/release-action@v1
         with:
-          artifacts: "dist/*"
           token: ${{ secrets.GITHUB_TOKEN }}
           bodyFile: "CHANGELOG.md"
           draft: false
@@ -54,5 +46,4 @@ jobs:
 
       - name: Publish package distributions to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
-        with:
-          attestations: true
+

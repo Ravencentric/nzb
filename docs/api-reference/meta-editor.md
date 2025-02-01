@@ -1,1 +1,1 @@
-::: nzb.NZBMetaEditor
+::: nzb.NzbMetaEditor

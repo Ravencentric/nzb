@@ -1,7 +1,7 @@
 # Project information
 site_name: nzb
 site_author: Ravencentric
-site_description: A spec compliant parser and meta editor for NZB files
+site_description: A spec compliant parser and meta editor for NZB files.
 
 # Repository
 repo_name: nzb
@@ -9,6 +9,7 @@ repo_url: https://github.com/Ravencentric/nzb
 edit_uri: edit/main/docs/
 
 theme:
+  language: en
   icon:
     repo: fontawesome/brands/github
     edit: material/pencil 
@@ -70,15 +71,19 @@ markdown_extensions:
   - pymdownx.inlinehilite
   - pymdownx.snippets:
       url_download: true
-  - pymdownx.superfences
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
   - pymdownx.tabbed:
       alternate_style: true
 
 nav:
   - Home: index.md
+  - Tutorial: tutorial.md
+  - NZB Structure: nzb-structure.md
   - API Reference:
       - Parser: api-reference/parser.md
       - Meta Editor: api-reference/meta-editor.md
-      - Models: api-reference/models.md
       - Types: api-reference/types.md
       - Exceptions: api-reference/exceptions.md

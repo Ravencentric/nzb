@@ -1,22 +1,22 @@
 """
 https://sabnzbd.org/wiki/extra/nzb-spec
 https://web.archive.org/web/20240709113825/https://sabnzbd.org/wiki/extra/nzb-spec
-"""
+"""  # noqa: D400, D415
 
 from __future__ import annotations
 
 import re
-from typing import Any, TypeAlias, Union, cast
+from typing import Any, TypeAlias, cast
 
 from natsort import natsorted
 
-from nzb._exceptions import InvalidNZBError
+from nzb._exceptions import InvalidNzbError
 from nzb._models import File, Meta, Segment
 
 
 def parse_metadata(nzb: dict[str, Any]) -> Meta:
     """
-    Parses the `<meta>...</meta>` field present in an NZB.
+    Parse the `<meta>...</meta>` field present in an NZB.
 
     ```xml
     <?xml version="1.0" encoding="iso-8859-1" ?>
@@ -39,7 +39,7 @@ def parse_metadata(nzb: dict[str, Any]) -> Meta:
     # - None if there's no meta field
 
     # Here's the type representation of the three possible cases that we need to handle
-    MetaFieldType: TypeAlias = Union[list[dict[str, str]], dict[str, str], None]
+    MetaFieldType: TypeAlias = list[dict[str, str]] | dict[str, str] | None
 
     # Explicit cast to tell typecheckers the return type based on the above 3 points.
     meta = cast(MetaFieldType, meta)
@@ -52,8 +52,8 @@ def parse_metadata(nzb: dict[str, Any]) -> Meta:
     if isinstance(meta, dict):
         meta = [meta]
 
-    passwordset = set()
-    tagset = set()
+    passwords: list[str] = []
+    tags: list[str] = []
     title = None
     category = None
 
@@ -67,7 +67,7 @@ def parse_metadata(nzb: dict[str, Any]) -> Meta:
             # <meta type="password">secret2</meta>
             # <meta type="password">secret3</meta>
             if password := item.get("#text"):
-                passwordset.add(password)
+                passwords.append(password)
 
         if item.get("@type", "").casefold() == "tag":
             # spec allows for multiple tags by repeating the same field
@@ -75,22 +75,22 @@ def parse_metadata(nzb: dict[str, Any]) -> Meta:
             # <meta type="tag">Anime</meta>
             # <meta type="tag">1080p</meta>
             if tag := item.get("#text"):
-                tagset.add(tag.strip())
+                tags.append(tag.strip())
 
         if item.get("@type", "").casefold() == "category":
             category = item.get("#text")
 
     return Meta(
         title=title,
-        passwords=passwordset if passwordset else None,  # type: ignore
-        tags=tagset if tagset else None,  # type: ignore
+        passwords=passwords,  # type: ignore[arg-type]
+        tags=tags,  # type: ignore[arg-type]
         category=category,
     )
 
 
 def parse_segments(segmentdict: dict[str, list[dict[str, str]] | dict[str, str] | None] | None) -> tuple[Segment, ...]:
     """
-    Parses the `<segments>...</segments>` field present in an NZB.
+    Parse the `<segments>...</segments>` field present in an NZB.
 
     There's 3 possible things that we can get here:
     - A list of dictionaries if there's more than 1 segment field present
@@ -115,12 +115,12 @@ def parse_segments(segmentdict: dict[str, list[dict[str, str]] | dict[str, str] 
     segments = segmentdict.get("segment") if segmentdict else None
 
     if segments is None:
-        raise InvalidNZBError("Missing or malformed <segments>...</segments>!")
+        raise InvalidNzbError("Missing or malformed <segments>...</segments>!")
 
     if isinstance(segments, dict):
         segments = [segments]
 
-    segmentset: set[Segment] = set()
+    segmentlist: list[Segment] = []
 
     for segment in segments:
         try:
@@ -133,14 +133,14 @@ def parse_segments(segmentdict: dict[str, list[dict[str, str]] | dict[str, str] 
             # segments don't invalidate the nzb.
             continue
 
-        segmentset.add(Segment(size=size, number=number, message_id=message_id))  # type: ignore
+        segmentlist.append(Segment(size=size, number=number, message_id=message_id))  # type: ignore[arg-type]
 
-    return tuple(natsorted(segmentset, key=lambda seg: seg.number))
+    return tuple(natsorted(segmentlist, key=lambda seg: seg.number))
 
 
 def parse_files(nzb: dict[str, Any]) -> tuple[File, ...]:
     """
-    Parses the `<file>...</file>` field present in an NZB.
+    Parse the `<file>...</file>` field present in an NZB.
 
     ```xml
     <?xml version="1.0" encoding="iso-8859-1" ?>
@@ -161,21 +161,21 @@ def parse_files(nzb: dict[str, Any]) -> tuple[File, ...]:
     # - None if there's no file field
 
     # Here's the type representation of the three possible cases that we need to handle
-    FileFieldType: TypeAlias = Union[list[dict[str, str]], dict[str, str], None]
+    FileFieldType: TypeAlias = list[dict[str, str]] | dict[str, str] | None
 
     # Explicit cast to tell typecheckers the return type based on the above 3 points.
     files = cast(FileFieldType, files)
 
     if files is None:
-        raise InvalidNZBError("Missing or malformed <file>...</file>!")
+        raise InvalidNzbError("Missing or malformed <file>...</file>!")
 
     if isinstance(files, dict):
         files = [files]
 
-    fileset: set[File] = set()
+    filelist: list[File] = []
 
     for file in files:
-        groupset: set[str] = set()
+        grouplist: list[str] = []
 
         groups = file.get("groups").get("group") if file.get("groups") else None
         # There's 3 possible things that we can get from the above here:
@@ -184,35 +184,40 @@ def parse_files(nzb: dict[str, Any]) -> tuple[File, ...]:
         # - None if there's no group field
 
         # Here's the type representation of the three possible cases that we need to handle
-        GroupFieldType: TypeAlias = Union[list[str], str, None]
+        GroupFieldType: TypeAlias = list[str] | str | None
 
         # Explicit cast to tell typecheckers the return type based on the above 3 points.
         groups = cast(GroupFieldType, groups)
 
         if groups is None:
-            raise InvalidNZBError("Missing or malformed <groups>...</groups>!")
+            raise InvalidNzbError("Missing or malformed <groups>...</groups>!")
 
         if isinstance(groups, str):
-            groupset.add(groups)
+            grouplist.append(groups)
         else:
-            groupset.update(groups)
+            grouplist.extend(groups)
 
-        fileset.add(
+        filelist.append(
             File(
                 poster=file.get("@poster"),
-                datetime=file.get("@date"),
+                posted_at=file.get("@date"),
                 subject=file.get("@subject"),
-                groups=natsorted(groupset),  # type: ignore
+                groups=natsorted(grouplist),  # type: ignore[arg-type]
                 segments=parse_segments(file.get("segments")),
             )
         )
 
-    return tuple(natsorted(fileset, key=lambda file: file.subject))
+    if not filelist:  # pragma: no cover
+        # I cannot think of any case where this will ever be raised
+        # but just in case
+        raise InvalidNzbError("Missing or malformed <file>...</file>!")
+
+    return tuple(natsorted(filelist, key=lambda file: file.subject))
 
 
 def parse_doctype(nzb: str) -> str | None:
     """
-    Parses the DOCTYPE from an NZB file.
+    Parse the DOCTYPE from an NZB file.
 
     Quoting https://www.oreilly.com/library/view/xml-pocket-reference/9780596100506/ch01s02s09.html:
     "A document type or DOCTYPE declaration provides information to a validating XML parser about how to validate an XML document.
@@ -227,6 +232,7 @@ def parse_doctype(nzb: str) -> str | None:
     ...
     </nzb>
     ```
+
     """
     doctype = re.search(r"<!DOCTYPE nzb.*>", nzb, re.IGNORECASE)
     return doctype.group() if doctype else None

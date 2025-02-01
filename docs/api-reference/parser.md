@@ -1,1 +1,4 @@
-::: nzb.NZBParser
+::: nzb.Nzb
+::: nzb.Meta
+::: nzb.File
+::: nzb.Segment

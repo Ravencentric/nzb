@@ -13,12 +13,12 @@
 [![PyPI - Version](https://img.shields.io/pypi/v/nzb?link=https%3A%2F%2Fpypi.org%2Fproject%2Fnzb%2F)](https://pypi.org/project/nzb/)
 ![PyPI - Python Version](https://img.shields.io/pypi/pyversions/nzb)
 ![License](https://img.shields.io/github/license/Ravencentric/nzb)
-![Checked with mypy](https://www.mypy-lang.org/static/mypy_badge.svg)
-![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)
+![PyPI - Types](https://img.shields.io/pypi/types/nzb)
 
-![GitHub Workflow Status (with event)](https://img.shields.io/github/actions/workflow/status/Ravencentric/nzb/release.yml)
-![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/ravencentric/nzb/test.yml?label=tests)
-[![codecov](https://codecov.io/gh/Ravencentric/nzb/graph/badge.svg?token=FFSOFFOM6J)](https://codecov.io/gh/Ravencentric/nzb)
+
+![GitHub Build Workflow Status](https://img.shields.io/github/actions/workflow/status/Ravencentric/nzb/release.yml)
+![GitHub Tests Workflow Status](https://img.shields.io/github/actions/workflow/status/ravencentric/nzb/test.yml?label=tests)
+[![Codecov Status](https://codecov.io/gh/Ravencentric/nzb/graph/badge.svg?token=FFSOFFOM6J)](https://codecov.io/gh/Ravencentric/nzb)
 
 </div>
 
@@ -42,28 +42,9 @@ A [spec](https://sabnzbd.org/wiki/extra/nzb-spec) compliant parser and meta edit
 pip install nzb
 ```
 
-## Usage
-
-```py
-from nzb import NZBParser
-
-nzb = NZBParser.from_file("Big Buck Bunny - S01E01.mkv.nzb").parse()
-
-print(f"{nzb.file.name} ({nzb.file.size.human_readable()})")
-#> Big Buck Bunny - S01E01.mkv (16.7MiB)
-
-for file in nzb.files:
-    print((file.name, file.size, file.datetime.isoformat(), file.groups))
-    #> ("Big Buck Bunny - S01E01.mkv", 17521761, "2024-01-28T11:18:28+00:00", ("alt.binaries.boneless",))
-    #> ("Big Buck Bunny - S01E01.mkv.par2", 1089, "2024-01-28T11:18:29+00:00", ("alt.binaries.boneless",))
-    #> ("Big Buck Bunny - S01E01.mkv.vol00+01.par2", 741017, "2024-01-28T11:18:29+00:00", ("alt.binaries.boneless",))
-    #> ("Big Buck Bunny - S01E01.mkv.vol01+02.par2", 1480494, "2024-01-28T11:18:29+00:00", ("alt.binaries.boneless",))
-    #> ("Big Buck Bunny - S01E01.mkv.vol03+04.par2", 2960528, "2024-01-28T11:18:29+00:00", ("alt.binaries.boneless",))
-```
-
 ## Docs
 
-Checkout the complete documentation [here](https://nzb.ravencentric.cc/).
+Checkout the [tutorial](https://nzb.ravencentric.cc/tutorial/) and the [API reference](https://nzb.ravencentric.cc/api-reference/parser/).
 
 ## License
 
