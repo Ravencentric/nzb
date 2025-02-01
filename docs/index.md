@@ -14,14 +14,13 @@
 <a href="https://pypi.org/project/nzb/"><img src="https://img.shields.io/pypi/v/nzb" alt="PyPI - Version" ></a>
 <img src="https://img.shields.io/pypi/pyversions/nzb" alt="PyPI - Python Version">
 <img src="https://img.shields.io/github/license/Ravencentric/nzb" alt="License">
-<img src="https://www.mypy-lang.org/static/mypy_badge.svg" alt="Checked with mypy">
-<img src="https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json" alt="Ruff">
+<img src="https://img.shields.io/pypi/types/nzb" alt="PyPI - Types">
 </p>
 
 <p align="center">
-<img src="https://img.shields.io/github/actions/workflow/status/Ravencentric/nzb/release.yml?" alt="GitHub Workflow Status">
-<img src="https://img.shields.io/github/actions/workflow/status/Ravencentric/nzb/test.yml?label=tests" alt="GitHub Workflow Status">
-<a href="https://codecov.io/gh/Ravencentric/nzb"><img src="https://codecov.io/gh/Ravencentric/nzb/graph/badge.svg?token=FFSOFFOM6J" alt="Codecov"></a>
+<img src="https://img.shields.io/github/actions/workflow/status/Ravencentric/nzb/release.yml?" alt="GitHub Build Workflow Status">
+<img src="https://img.shields.io/github/actions/workflow/status/Ravencentric/nzb/test.yml?label=tests" alt="GitHub Tests Workflow Status">
+<a href="https://codecov.io/gh/Ravencentric/nzb"><img src="https://codecov.io/gh/Ravencentric/nzb/graph/badge.svg?token=FFSOFFOM6J" alt="Codecov Status"></a>
 </p>
 
 
