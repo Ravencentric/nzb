@@ -7,11 +7,11 @@ from nzb._models import File, Meta, Segment
 __version__ = "0.3.0"
 
 __all__ = (
-    "NzbMetaEditor",
-    "Meta",
     "File",
-    "Segment",
-    "Nzb",
     "InvalidNzbError",
+    "Meta",
+    "Nzb",
+    "NzbMetaEditor",
+    "Segment",
     "__version__",
 )

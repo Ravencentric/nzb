@@ -6,8 +6,8 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from collections.abc import Iterable
-    from typing import Callable, ParamSpec, TypeVar
+    from collections.abc import Callable, Iterable
+    from typing import ParamSpec, TypeVar
 
     from nzb._types import StrPath
 
@@ -25,7 +25,7 @@ def realpath(path: StrPath, /) -> Path:
     return Path(path).expanduser().resolve()
 
 
-def meta_constructor(
+def construct_meta(
     title: str | None = None,
     passwords: Iterable[str] | str | None = None,
     tags: Iterable[str] | str | None = None,
@@ -45,19 +45,83 @@ def meta_constructor(
             meta.append({"@type": "password", "#text": passwords})
         else:
             for password in passwords:
-                meta.append({"@type": "password", "#text": password})
+                meta.append({"@type": "password", "#text": password})  # noqa: PERF401
 
     if tags:
         if isinstance(tags, str):
             meta.append({"@type": "tag", "#text": tags})
         else:
             for tag in tags:
-                meta.append({"@type": "tag", "#text": tag})
+                meta.append({"@type": "tag", "#text": tag})  # noqa: PERF401
 
     if category:
         meta.append({"@type": "category", "#text": category})
 
     return meta
+
+
+def sort_meta(meta: list[dict[str, str]]) -> list[dict[str, str]]:
+    """
+    Sort meta list elements based on predefined hierarchy.
+
+    This function provides a sorting key for meta elements, prioritizing them in the following order:
+    title (0) > category (1) > password (2) > tag (3) > everything else (-1)
+
+    Parameters
+    ----------
+    meta : list[dict[str, str]]
+        List of metadata dictionaries, where each dictionary contains '@type' and '#text' keys
+
+    Returns
+    -------
+    list[dict[str, str]]
+        Sorted list of meta dicts
+
+    Examples
+    --------
+    >>> meta = [
+    ...     {"@type": "title", "#text": "Big Buck Bunny - S01E01.mkv"},
+    ...     {"@type": "password", "#text": "secret"},
+    ...     {"@type": "tag", "#text": "HD"},
+    ...     {"@type": "category", "#text": "TV"},
+    ... ]
+    >>> sort_meta(meta)
+
+    """
+
+    def key(k: dict[str, str]) -> int:
+        sort_keys = {"title": 0, "category": 1, "password": 2, "tag": 3}
+        typ = k["@type"].strip().casefold()
+        return sort_keys.get(typ, -1)
+
+    return sorted(meta, key=key)
+
+
+def remove_meta_fields(
+    meta: list[dict[str, str]],
+    fields: Iterable[str] | None = None,
+) -> list[dict[str, str]]:
+    """
+    Remove specified fields from meta list.
+
+    Parameters
+    ----------
+    meta : list[dict[str, str]]
+        List of metadata dictionaries
+    fields : Iterable[str]] | None
+        Fields to remove from meta list. If None, return original meta list.
+
+    Returns
+    -------
+    list[dict[str, str]]
+        Meta list with specified fields removed
+
+    """
+    if fields is None:
+        return meta
+
+    fields_set = {field.strip().casefold() for field in fields}
+    return [item for item in meta if item["@type"].strip().casefold() not in fields_set]
 
 
 @cache
@@ -72,6 +136,7 @@ def name_is_par2(filename: str) -> bool:
     Returns
     -------
     bool
+
     """
     if not filename:
         return False
@@ -97,6 +162,7 @@ def name_is_rar(filename: str) -> bool:
     -----
     The regex used here was copy-pasted from SABnzbd:
     https://github.com/sabnzbd/sabnzbd/blob/02b4a116dd4b46b2d2f33f7bbf249f2294458f2e/sabnzbd/nzbstuff.py#L107
+
     """
     if not filename:
         return False
@@ -124,6 +190,7 @@ def stem_is_obfuscated(filestem: str) -> bool:  # pragma: no cover
     -----
     This function was copy-pasted from SABnzbd:
     https://github.com/sabnzbd/sabnzbd/blob/297455cd35c71962d39a36b7f99622f905d2234e/sabnzbd/deobfuscate_filenames.py#L104
+
     """
     if not filestem:
         return True

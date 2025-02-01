@@ -13,7 +13,7 @@ from xmltodict import unparse as xmltodict_unparse
 from nzb._exceptions import InvalidNzbError
 from nzb._models import File, Meta, ParentModel
 from nzb._parser import parse_doctype, parse_files, parse_metadata
-from nzb._utils import meta_constructor, realpath
+from nzb._utils import construct_meta, realpath, remove_meta_fields, sort_meta
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
@@ -76,7 +76,7 @@ class Nzb(ParentModel):
             # ```
             nzbdict = xmltodict_parse(nzb.strip())
         except ExpatError as error:
-            raise InvalidNzbError(error.args[0])
+            raise InvalidNzbError(error.args[0]) from None
 
         meta = parse_metadata(nzbdict)
         files = parse_files(nzbdict)
@@ -242,6 +242,7 @@ class NzbMetaEditor:
         Note
         ----
         This does not validate the NZB structure or contents.
+
         """
         self._nzb = nzb
         try:
@@ -258,7 +259,7 @@ class NzbMetaEditor:
             # ```
             self._nzbdict = xmltodict_parse(self._nzb.strip())
         except ExpatError as error:
-            raise InvalidNzbError(error.args[0])
+            raise InvalidNzbError(error.args[0]) from None
 
     @classmethod
     def from_file(cls, nzb: StrPath, *, encoding: str = "utf-8") -> Self:
@@ -284,7 +285,7 @@ class NzbMetaEditor:
         instance = cls(data)
         return instance
 
-    def __get_meta(self) -> list[dict[str, str]] | dict[str, str] | None:
+    def _get_meta(self) -> list[dict[str, str]] | dict[str, str] | None:
         """
         Retrieve current metadata from the NZB.
 
@@ -292,6 +293,7 @@ class NzbMetaEditor:
         -------
         list[dict[str, str]] | dict[str, str] | None
             The metadata as a list of dictionaries, a single dictionary, or `None` if not found.
+
         """
         return self._nzbdict.get("nzb", {}).get("head", {}).get("meta")  # type: ignore[no-any-return]
 
@@ -322,17 +324,37 @@ class NzbMetaEditor:
         -------
         Self
             Returns itself.
+
         """
 
         if title is None and passwords is None and tags is None and category is None:
             return self
 
-        nzb = OrderedDict(self._nzbdict["nzb"])
+        meta = self._get_meta()
 
-        nzb["head"] = {}
-        nzb["head"]["meta"] = meta_constructor(title=title, passwords=passwords, tags=tags, category=category)
-        nzb.move_to_end("file")
-        self._nzbdict["nzb"] = nzb
+        if meta is None:
+            nzb = OrderedDict(self._nzbdict["nzb"])
+            nzb["head"] = {}
+            nzb["head"]["meta"] = sort_meta(
+                construct_meta(title=title, passwords=passwords, tags=tags, category=category)
+            )
+            nzb.move_to_end("file")
+            self._nzbdict["nzb"] = nzb
+            return self
+
+        new_meta = [meta] if isinstance(meta, dict) else meta
+
+        fields_to_remove = {
+            "title": title is not None,
+            "category": category is not None,
+            "password": passwords is not None,
+            "tag": tags is not None,
+        }
+
+        filtered_meta = remove_meta_fields(new_meta, [k for k, v in fields_to_remove.items() if v])
+        filtered_meta.extend(construct_meta(title=title, passwords=passwords, tags=tags, category=category))
+        self._nzbdict["nzb"]["head"]["meta"] = sort_meta(filtered_meta)
+
         return self
 
     def append(
@@ -361,31 +383,24 @@ class NzbMetaEditor:
         -------
         Self
             Returns itself.
+
         """
 
-        meta = self.__get_meta()
+        meta = self._get_meta()
 
         if meta is None:
             return self.set(title=title, passwords=passwords, tags=tags, category=category)
 
         new_meta = [meta] if isinstance(meta, dict) else meta
 
-        if title is not None:
-            # There can only ever be one title, so we remove the existing title
-            # before appending the new one.
-            new_meta = [item for item in new_meta if item["@type"].casefold() != "title".casefold()]
+        fields_to_remove = {
+            "title": title is not None,
+            "category": category is not None,
+        }
 
-        if category is not None:
-            # There can only ever be one category, so we remove the existing title
-            # before appending the new one.
-            new_meta = [item for item in new_meta if item["@type"].casefold() != "category".casefold()]
-
-        new_meta.extend(meta_constructor(title=title, passwords=passwords, tags=tags, category=category))
-        self._nzbdict["nzb"]["head"]["meta"] = sorted(
-            new_meta,
-            # Sort the meta keys in the order: title (0) > category (1) > password (2) > tag (3) > everything else (-1)
-            key=lambda x: {"title": 0, "category": 1, "password": 2, "tag": 3}.get(x["@type"].strip().casefold(), -1),
-        )
+        filtered_meta = remove_meta_fields(new_meta, [k for k, v in fields_to_remove.items() if v])
+        filtered_meta.extend(construct_meta(title=title, passwords=passwords, tags=tags, category=category))
+        self._nzbdict["nzb"]["head"]["meta"] = sort_meta(filtered_meta)
 
         return self
 
@@ -409,9 +424,10 @@ class NzbMetaEditor:
         -------
         Self
             Returns itself.
+
         """
 
-        meta = self.__get_meta()
+        meta = self._get_meta()
 
         if meta is None:
             return self
@@ -434,6 +450,7 @@ class NzbMetaEditor:
         -------
         Self
             Returns itself.
+
         """
         try:
             del self._nzbdict["nzb"]["head"]
@@ -483,6 +500,7 @@ class NzbMetaEditor:
         ------
         FileExistsError
             If the file exists and overwrite is `False`.
+
         """
 
         outfile = realpath(filename)

@@ -6,7 +6,7 @@ https://web.archive.org/web/20240709113825/https://sabnzbd.org/wiki/extra/nzb-sp
 from __future__ import annotations
 
 import re
-from typing import Any, TypeAlias, Union, cast
+from typing import Any, TypeAlias, cast
 
 from natsort import natsorted
 
@@ -39,7 +39,7 @@ def parse_metadata(nzb: dict[str, Any]) -> Meta:
     # - None if there's no meta field
 
     # Here's the type representation of the three possible cases that we need to handle
-    MetaFieldType: TypeAlias = Union[list[dict[str, str]], dict[str, str], None]
+    MetaFieldType: TypeAlias = list[dict[str, str]] | dict[str, str] | None
 
     # Explicit cast to tell typecheckers the return type based on the above 3 points.
     meta = cast(MetaFieldType, meta)
@@ -161,7 +161,7 @@ def parse_files(nzb: dict[str, Any]) -> tuple[File, ...]:
     # - None if there's no file field
 
     # Here's the type representation of the three possible cases that we need to handle
-    FileFieldType: TypeAlias = Union[list[dict[str, str]], dict[str, str], None]
+    FileFieldType: TypeAlias = list[dict[str, str]] | dict[str, str] | None
 
     # Explicit cast to tell typecheckers the return type based on the above 3 points.
     files = cast(FileFieldType, files)
@@ -184,7 +184,7 @@ def parse_files(nzb: dict[str, Any]) -> tuple[File, ...]:
         # - None if there's no group field
 
         # Here's the type representation of the three possible cases that we need to handle
-        GroupFieldType: TypeAlias = Union[list[str], str, None]
+        GroupFieldType: TypeAlias = list[str] | str | None
 
         # Explicit cast to tell typecheckers the return type based on the above 3 points.
         groups = cast(GroupFieldType, groups)
@@ -232,6 +232,7 @@ def parse_doctype(nzb: str) -> str | None:
     ...
     </nzb>
     ```
+
     """
     doctype = re.search(r"<!DOCTYPE nzb.*>", nzb, re.IGNORECASE)
     return doctype.group() if doctype else None
