@@ -1,7 +1,7 @@
 """
 https://sabnzbd.org/wiki/extra/nzb-spec
 https://web.archive.org/web/20240709113825/https://sabnzbd.org/wiki/extra/nzb-spec
-"""
+"""  # noqa: D400, D415
 
 from __future__ import annotations
 
@@ -16,7 +16,7 @@ from nzb._models import File, Meta, Segment
 
 def parse_metadata(nzb: dict[str, Any]) -> Meta:
     """
-    Parses the `<meta>...</meta>` field present in an NZB.
+    Parse the `<meta>...</meta>` field present in an NZB.
 
     ```xml
     <?xml version="1.0" encoding="iso-8859-1" ?>
@@ -90,7 +90,7 @@ def parse_metadata(nzb: dict[str, Any]) -> Meta:
 
 def parse_segments(segmentdict: dict[str, list[dict[str, str]] | dict[str, str] | None] | None) -> tuple[Segment, ...]:
     """
-    Parses the `<segments>...</segments>` field present in an NZB.
+    Parse the `<segments>...</segments>` field present in an NZB.
 
     There's 3 possible things that we can get here:
     - A list of dictionaries if there's more than 1 segment field present
@@ -140,7 +140,7 @@ def parse_segments(segmentdict: dict[str, list[dict[str, str]] | dict[str, str] 
 
 def parse_files(nzb: dict[str, Any]) -> tuple[File, ...]:
     """
-    Parses the `<file>...</file>` field present in an NZB.
+    Parse the `<file>...</file>` field present in an NZB.
 
     ```xml
     <?xml version="1.0" encoding="iso-8859-1" ?>
@@ -217,7 +217,7 @@ def parse_files(nzb: dict[str, Any]) -> tuple[File, ...]:
 
 def parse_doctype(nzb: str) -> str | None:
     """
-    Parses the DOCTYPE from an NZB file.
+    Parse the DOCTYPE from an NZB file.
 
     Quoting https://www.oreilly.com/library/view/xml-pocket-reference/9780596100506/ch01s02s09.html:
     "A document type or DOCTYPE declaration provides information to a validating XML parser about how to validate an XML document.

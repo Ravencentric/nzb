@@ -27,7 +27,7 @@ class Nzb(ParentModel):
     """
     Represents a complete NZB file.
 
-    Example
+    Example:
     -------
     ```python
     from nzb import Nzb
@@ -60,6 +60,7 @@ class Nzb(ParentModel):
     print(f"Number of files: {len(nzb.files)}")
     print(f"Total size in bytes: {nzb.size}")
     ```
+
     """
 
     meta: Meta = Meta()
@@ -393,6 +394,7 @@ class NzbMetaEditor:
         -------
         Self
             Returns itself.
+
         """
 
         if title is None and passwords is None and tags is None and category is None:

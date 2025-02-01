@@ -32,7 +32,7 @@ def construct_meta(
     category: str | None = None,
 ) -> list[dict[str, str]]:
     """
-    Constructor that constructs valid `<meta> .. </meta>` fields
+    Construct `<meta> .. </meta>` fields.
     """
 
     meta = []
@@ -132,6 +132,7 @@ def name_is_par2(filename: str) -> bool:
     Parameters
     ----------
     filename : str
+        Name of the file with it's extension, i.e., the final component in a path.
 
     Returns
     -------
@@ -153,6 +154,7 @@ def name_is_rar(filename: str) -> bool:
     Parameters
     ----------
     filename : str
+        Name of the file with it's extension, i.e., the final component in a path.
 
     Returns
     -------
