@@ -9,6 +9,7 @@ repo_url: https://github.com/Ravencentric/nzb
 edit_uri: edit/main/docs/
 
 theme:
+  language: en
   icon:
     repo: fontawesome/brands/github
     edit: material/pencil 
@@ -84,6 +85,5 @@ nav:
   - API Reference:
       - Parser: api-reference/parser.md
       - Meta Editor: api-reference/meta-editor.md
-      - Models: api-reference/models.md
       - Types: api-reference/types.md
       - Exceptions: api-reference/exceptions.md

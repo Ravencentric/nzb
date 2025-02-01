@@ -3,15 +3,11 @@ from __future__ import annotations
 import re
 from functools import cached_property
 from os.path import splitext
-from typing import TYPE_CHECKING
 
 from pydantic import BaseModel, ConfigDict
 
 from nzb._types import UTCDateTime
 from nzb._utils import name_is_par2, name_is_rar, stem_is_obfuscated
-
-if TYPE_CHECKING:
-    pass
 
 
 class ParentModel(BaseModel):

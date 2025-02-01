@@ -37,25 +37,6 @@ A [spec](https://sabnzbd.org/wiki/extra/nzb-spec) compliant parser and meta edit
 pip install nzb
 ```
 
-## Usage
-
-```py
-from nzb import NZBParser
-
-nzb = NZBParser.from_file("Big Buck Bunny - S01E01.mkv.nzb").parse()
-
-print(f"{nzb.file.name} ({nzb.file.size.human_readable()})")
-#> Big Buck Bunny - S01E01.mkv (16.7MiB)
-
-for file in nzb.files:
-    print((file.name, file.size, file.datetime.isoformat(), file.groups))
-    #> ("Big Buck Bunny - S01E01.mkv", 17521761, "2024-01-28T11:18:28+00:00", ("alt.binaries.boneless",))
-    #> ("Big Buck Bunny - S01E01.mkv.par2", 1089, "2024-01-28T11:18:29+00:00", ("alt.binaries.boneless",))
-    #> ("Big Buck Bunny - S01E01.mkv.vol00+01.par2", 741017, "2024-01-28T11:18:29+00:00", ("alt.binaries.boneless",))
-    #> ("Big Buck Bunny - S01E01.mkv.vol01+02.par2", 1480494, "2024-01-28T11:18:29+00:00", ("alt.binaries.boneless",))
-    #> ("Big Buck Bunny - S01E01.mkv.vol03+04.par2", 2960528, "2024-01-28T11:18:29+00:00", ("alt.binaries.boneless",))
-```
-
 ## License
 
 Distributed under the [MIT](https://choosealicense.com/licenses/mit/) License. See [LICENSE](https://github.com/Ravencentric/nzb/blob/main/LICENSE) for more information.

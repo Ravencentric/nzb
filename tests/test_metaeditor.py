@@ -13,7 +13,7 @@ def dedent(s: str) -> str:
     return textwrap.dedent(s).strip()
 
 
-def test_meta_clear(tmp_path: Path) -> None:
+def test_meta_clear() -> None:
     nzb = NZB_DIR / "spec_example.nzb"
     edited = NzbMetaEditor.from_file(nzb).clear().to_str()
     assert edited == dedent("""
@@ -34,7 +34,7 @@ def test_meta_clear(tmp_path: Path) -> None:
     """)
 
 
-def test_nzb_with_no_head_clear(tmp_path: Path) -> None:
+def test_nzb_with_no_head_clear() -> None:
     nzb = NZB_DIR / "nzb_with_no_head.nzb"
     edited = NzbMetaEditor.from_file(nzb).clear().to_str()
     assert edited == dedent("""
@@ -55,7 +55,7 @@ def test_nzb_with_no_head_clear(tmp_path: Path) -> None:
     """)
 
 
-def test_meta_remove_append(tmp_path: Path) -> None:
+def test_meta_remove_append() -> None:
     nzb = NZB_DIR / "spec_example.nzb"
     edited = NzbMetaEditor.from_file(nzb).remove("password").append(passwords="new secret!").to_str()
     assert edited == dedent("""
@@ -82,22 +82,101 @@ def test_meta_remove_append(tmp_path: Path) -> None:
     """)
 
 
-def test_meta_append_when_file_has_no_meta(tmp_path: Path) -> None:
+def test_meta_append_when_file_has_no_meta() -> None:
     nzb = NZB_DIR / "no_meta.nzb"
-    append = NzbMetaEditor.from_file(nzb).append(title="appending").to_file(tmp_path / "no_meta_append.nzb")
-    set = NzbMetaEditor.from_file(nzb).set(title="appending").to_file(tmp_path / "no_meta_set.nzb")
-    assert append.read_text(encoding).strip() == set.read_text(encoding).strip()
+    edited = NzbMetaEditor.from_file(nzb).append(passwords="password appended").to_str()
+    assert edited == dedent("""
+    <?xml version="1.0" encoding="utf-8"?>
+    <!DOCTYPE nzb PUBLIC "-//newzBin//DTD NZB 1.1//EN" "http://www.newzbin.com/DTD/nzb/nzb-1.1.dtd">
+    <nzb xmlns="http://www.newzbin.com/DTD/2003/nzb">
+        <head>
+            <meta type="password">password appended</meta>
+        </head>
+        <file poster="Joe Bloggs &lt;bloggs@nowhere.example&gt;" date="1071674882" subject="Here's your file!  abc-mr2a.r01 (1/2)">
+            <groups>
+                <group>alt.binaries.newzbin</group>
+                <group>alt.binaries.mojo</group>
+            </groups>
+            <segments>
+                <segment bytes="102394" number="1">123456789abcdef@news.newzbin.com</segment>
+                <segment bytes="4501" number="2">987654321fedbca@news.newzbin.com</segment>
+            </segments>
+        </file>
+    </nzb>
+    """)
 
 
-def test_meta_append_when_file_has_single_meta(tmp_path: Path) -> None:
+def test_meta_append_when_file_has_single_meta() -> None:
     nzb = NZB_DIR / "single_meta.nzb"
-    append = (
-        NzbMetaEditor.from_file(nzb)
-        .append(title="appending")
-        .to_file(tmp_path / "test_meta_append_when_file_has_single_meta.nzb")
-    )
-    parsed = Nzb.from_file(append)
-    assert parsed.meta.title == "appending"
+    edited = NzbMetaEditor.from_file(nzb).append(tags="tag appended").to_str()
+    assert edited == dedent("""
+    <?xml version="1.0" encoding="utf-8"?>
+    <!DOCTYPE nzb PUBLIC "-//newzBin//DTD NZB 1.1//EN" "http://www.newzbin.com/DTD/nzb/nzb-1.1.dtd">
+    <nzb xmlns="http://www.newzbin.com/DTD/2003/nzb">
+        <head>
+            <meta type="title">title</meta>
+            <meta type="tag">tag appended</meta>
+        </head>
+        <file poster="Joe Bloggs &lt;bloggs@nowhere.example&gt;" date="1071674882" subject="Here's your file!  abc-mr2a.r01 (1/2)">
+            <groups>
+                <group>alt.binaries.newzbin</group>
+                <group>alt.binaries.mojo</group>
+            </groups>
+            <segments>
+                <segment bytes="102394" number="1">123456789abcdef@news.newzbin.com</segment>
+                <segment bytes="4501" number="2">987654321fedbca@news.newzbin.com</segment>
+            </segments>
+        </file>
+    </nzb>
+    """)
+
+
+def test_meta_set_when_file_has_no_meta() -> None:
+    nzb = NZB_DIR / "no_meta.nzb"
+    edited = NzbMetaEditor.from_file(nzb).set(title="Big Buck Bunny").to_str()
+    assert edited == dedent("""
+    <?xml version="1.0" encoding="utf-8"?>
+    <!DOCTYPE nzb PUBLIC "-//newzBin//DTD NZB 1.1//EN" "http://www.newzbin.com/DTD/nzb/nzb-1.1.dtd">
+    <nzb xmlns="http://www.newzbin.com/DTD/2003/nzb">
+        <head>
+            <meta type="title">Big Buck Bunny</meta>
+        </head>
+        <file poster="Joe Bloggs &lt;bloggs@nowhere.example&gt;" date="1071674882" subject="Here's your file!  abc-mr2a.r01 (1/2)">
+            <groups>
+                <group>alt.binaries.newzbin</group>
+                <group>alt.binaries.mojo</group>
+            </groups>
+            <segments>
+                <segment bytes="102394" number="1">123456789abcdef@news.newzbin.com</segment>
+                <segment bytes="4501" number="2">987654321fedbca@news.newzbin.com</segment>
+            </segments>
+        </file>
+    </nzb>
+    """)
+
+
+def test_meta_set_when_file_has_single_meta() -> None:
+    nzb = NZB_DIR / "single_meta.nzb"
+    edited = NzbMetaEditor.from_file(nzb).set(title="Big Buck Bunny").to_str()
+    assert edited == dedent("""
+    <?xml version="1.0" encoding="utf-8"?>
+    <!DOCTYPE nzb PUBLIC "-//newzBin//DTD NZB 1.1//EN" "http://www.newzbin.com/DTD/nzb/nzb-1.1.dtd">
+    <nzb xmlns="http://www.newzbin.com/DTD/2003/nzb">
+        <head>
+            <meta type="title">Big Buck Bunny</meta>
+        </head>
+        <file poster="Joe Bloggs &lt;bloggs@nowhere.example&gt;" date="1071674882" subject="Here's your file!  abc-mr2a.r01 (1/2)">
+            <groups>
+                <group>alt.binaries.newzbin</group>
+                <group>alt.binaries.mojo</group>
+            </groups>
+            <segments>
+                <segment bytes="102394" number="1">123456789abcdef@news.newzbin.com</segment>
+                <segment bytes="4501" number="2">987654321fedbca@news.newzbin.com</segment>
+            </segments>
+        </file>
+    </nzb>
+    """)
 
 
 def test_meta_remove_empty(tmp_path: Path) -> None:
@@ -195,7 +274,7 @@ def test_meta_set(tmp_path: Path) -> None:
     """)
 
 
-def test_meta_set_empty(tmp_path: Path) -> None:
+def test_meta_set_empty() -> None:
     nzb = dedent("""
     <?xml version="1.0" encoding="utf-8"?>
     <!DOCTYPE nzb PUBLIC "-//newzBin//DTD NZB 1.1//EN" "http://www.newzbin.com/DTD/nzb/nzb-1.1.dtd">
@@ -293,14 +372,14 @@ def test_meta_editor_append_title() -> None:
         </file>
     </nzb>
     """)
-    editor = NzbMetaEditor(s).append(title="Dupe title", category="Dupe category", tags="1080p", passwords="secret2")
+    editor = NzbMetaEditor(s).set(title="Big Buck Bunny", category="Movie").append(tags="1080p", passwords="secret2")
     assert editor.to_str() == dedent("""
     <?xml version="1.0" encoding="utf-8"?>
     <!DOCTYPE nzb PUBLIC "-//newzBin//DTD NZB 1.1//EN" "http://www.newzbin.com/DTD/nzb/nzb-1.1.dtd">
     <nzb xmlns="http://www.newzbin.com/DTD/2003/nzb">
         <head>
-            <meta type="title">Dupe title</meta>
-            <meta type="category">Dupe category</meta>
+            <meta type="title">Big Buck Bunny</meta>
+            <meta type="category">Movie</meta>
             <meta type="password">secret</meta>
             <meta type="password">secret2</meta>
             <meta type="tag">HD</meta>

@@ -1,5 +1,7 @@
 # Structure of an NZB file
 
+## Overview
+
 [NZB is an XML-based file format for retrieving posts from NNTP (Usenet) servers](https://en.wikipedia.org/wiki/NZB).
 Here's an example file:
 
@@ -33,6 +35,10 @@ Together, the segments form a single file.
 
 For instance, in the example above, `file` points to a file called `Big Buck Bunny - S01E01.mkv` that belongs to the `alt.binaries.boneless` group and was broken into 2 segments, each about 739 kilobytes in size.
 
+## Diagram
+
+Here's a class diagram representing the structure of an NZB, which mirrors the Python implementation.
+
 ```mermaid
 classDiagram
     class Meta {
@@ -50,7 +56,7 @@ classDiagram
 
     class File {
         poster: str
-        datetime: datetime
+        posted_at: datetime
         subject: str
         groups: tuple[str, ...]
         segments: tuple[Segment, ...]
@@ -61,8 +67,7 @@ classDiagram
         files: tuple[File, ...]
     }
 
-
-    Nzb --> Meta
-    Nzb --> File
-    File --> Segment
+    Nzb -- Meta
+    Nzb -- File
+    File -- Segment
 ```

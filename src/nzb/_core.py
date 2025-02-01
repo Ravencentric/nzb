@@ -24,7 +24,43 @@ if TYPE_CHECKING:
 
 
 class Nzb(ParentModel):
-    """Represents a complete NZB file."""
+    """
+    Represents a complete NZB file.
+
+    Example
+    -------
+    ```python
+    from nzb import Nzb
+
+    text = '''
+    <?xml version="1.0" encoding="UTF-8"?>
+    <!DOCTYPE nzb PUBLIC "-//newzBin//DTD NZB 1.1//EN" "http://www.newzbin.com/DTD/nzb/nzb-1.1.dtd">
+    <nzb xmlns="http://www.newzbin.com/DTD/2003/nzb">
+        <head>
+            <meta type="title">Big Buck Bunny - S01E01.mkv</meta>
+            <meta type="password">secret</meta>
+            <meta type="tag">HD</meta>
+            <meta type="category">TV</meta>
+        </head>
+        <file poster="John &lt;nzb@nowhere.example&gt;" date="1706440708" subject="[1/1] - &quot;Big Buck Bunny - S01E01.mkv&quot; yEnc (1/2) 1478616">
+            <groups>
+                <group>alt.binaries.boneless</group>
+            </groups>
+            <segments>
+                <segment bytes="739067" number="1">9cacde4c986547369becbf97003fb2c5-9483514693959@example</segment>
+                <segment bytes="739549" number="2">70a3a038ce324e618e2751e063d6a036-7285710986748@example</segment>
+            </segments>
+        </file>
+    </nzb>
+    '''
+
+    nzb = Nzb.from_str(text)
+
+    print(f"{nzb.file.name} ({nzb.meta.category}) was posted by {nzb.file.poster} on {nzb.file.posted_at}.")
+    print(f"Number of files: {len(nzb.files)}")
+    print(f"Total size in bytes: {nzb.size}")
+    ```
+    """
 
     meta: Meta = Meta()
     """Optional creator-definable metadata for the contents of the NZB."""
@@ -241,7 +277,39 @@ class NzbMetaEditor:
 
         Note
         ----
-        This does not validate the NZB structure or contents.
+        This does not validate the given NZB.
+
+        Example
+        -------
+        ```python
+        from nzb import NzbMetaEditor
+
+        text = '''
+        <?xml version="1.0" encoding="UTF-8"?>
+        <!DOCTYPE nzb PUBLIC "-//newzBin//DTD NZB 1.1//EN" "http://www.newzbin.com/DTD/nzb/nzb-1.1.dtd">
+        <nzb xmlns="http://www.newzbin.com/DTD/2003/nzb">
+            <head>
+                <meta type="title">Big Buck Bunny - S01E01.mkv</meta>
+                <meta type="password">secret</meta>
+                <meta type="tag">HD</meta>
+                <meta type="category">TV</meta>
+            </head>
+            <file poster="John &lt;nzb@nowhere.example&gt;" date="1706440708" subject="[1/1] - &quot;Big Buck Bunny - S01E01.mkv&quot; yEnc (1/2) 1478616">
+                <groups>
+                    <group>alt.binaries.boneless</group>
+                </groups>
+                <segments>
+                    <segment bytes="739067" number="1">9cacde4c986547369becbf97003fb2c5-9483514693959@example</segment>
+                    <segment bytes="739549" number="2">70a3a038ce324e618e2751e063d6a036-7285710986748@example</segment>
+                </segments>
+            </file>
+        </nzb>
+        '''
+
+        editor = NzbMetaEditor(text)
+        edited = editor.set(title="Big Buck Bunny").append(tags="1080p").to_str()
+        print(edited)
+        ```
 
         """
         self._nzb = nzb
@@ -254,7 +322,7 @@ class NzbMetaEditor:
             # text = """
             # <xml>
             # """
-            # Nzb.from_str(text)
+            # NzbMetaEditor(text)
             #
             # ```
             self._nzbdict = xmltodict_parse(self._nzb.strip())
@@ -307,7 +375,8 @@ class NzbMetaEditor:
     ) -> Self:
         """
         Set metadata fields in the NZB.
-        This will also remove all existing metadata fields.
+        Provided fields are replaced entirely if they already exist.
+        Fields that aren't provided remain unchanged.
 
         Parameters
         ----------
@@ -324,7 +393,6 @@ class NzbMetaEditor:
         -------
         Self
             Returns itself.
-
         """
 
         if title is None and passwords is None and tags is None and category is None:
@@ -360,24 +428,18 @@ class NzbMetaEditor:
     def append(
         self,
         *,
-        title: str | None = None,
         passwords: Iterable[str] | str | None = None,
         tags: Iterable[str] | str | None = None,
-        category: str | None = None,
     ) -> Self:
         """
         Append metadata fields to the existing metadata in the NZB.
 
         Parameters
         ----------
-        title : str, optional
-            The title metadata field.
         passwords : Iterable[str] | str, optional
             Password(s) for the NZB file.
         tags : Iterable[str] | str, optional
             Tag(s) associated with the NZB file.
-        category : str, optional
-            Category of the NZB file.
 
         Returns
         -------
@@ -389,18 +451,12 @@ class NzbMetaEditor:
         meta = self._get_meta()
 
         if meta is None:
-            return self.set(title=title, passwords=passwords, tags=tags, category=category)
+            return self.set(passwords=passwords, tags=tags)
 
         new_meta = [meta] if isinstance(meta, dict) else meta
+        new_meta.extend(construct_meta(passwords=passwords, tags=tags))
 
-        fields_to_remove = {
-            "title": title is not None,
-            "category": category is not None,
-        }
-
-        filtered_meta = remove_meta_fields(new_meta, [k for k, v in fields_to_remove.items() if v])
-        filtered_meta.extend(construct_meta(title=title, passwords=passwords, tags=tags, category=category))
-        self._nzbdict["nzb"]["head"]["meta"] = sort_meta(filtered_meta)
+        self._nzbdict["nzb"]["head"]["meta"] = sort_meta(new_meta)
 
         return self
 
