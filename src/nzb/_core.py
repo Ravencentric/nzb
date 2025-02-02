@@ -10,7 +10,7 @@ from natsort import natsorted
 
 from nzb._models import File, Meta, ParentModel
 from nzb._parser import parse_doctype, parse_files, parse_metadata
-from nzb._utils import construct_meta, nzb_to_dict, realpath, remove_meta_fields, sort_meta
+from nzb._utils import construct_meta, nzb_to_dict, read_nzb_file, realpath, remove_meta_fields, sort_meta
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
@@ -103,16 +103,15 @@ class Nzb(ParentModel):
         return cls(meta=meta, files=files)
 
     @classmethod
-    def from_file(cls, nzb: StrPath, /, *, encoding: str = "utf-8") -> Nzb:
+    def from_file(cls, nzb: StrPath, /) -> Nzb:
         """
         Parse the given file into an [`Nzb`][nzb.Nzb].
+        Handles both regular and gzipped NZB files.
 
         Parameters
         ----------
         nzb : str | PathLike[str]
             Path to the NZB file.
-        encoding : str, optional
-            The encoding used to open the file.
 
         Returns
         -------
@@ -125,11 +124,7 @@ class Nzb(ParentModel):
             Raised if the NZB is invalid.
 
         """
-        if not isinstance(encoding, str):
-            raise ValueError("encoding must be a valid string!")
-
-        _nzb = realpath(nzb).read_text(encoding=encoding)
-        return cls.from_str(_nzb)
+        return cls.from_str(read_nzb_file(nzb))
 
     @classmethod
     def from_json(cls, json: str, /) -> Nzb:
@@ -251,7 +246,7 @@ class Nzb(ParentModel):
 
 
 class NzbMetaEditor:
-    def __init__(self, nzb: str) -> None:
+    def __init__(self, nzb: str, /) -> None:
         """
         Create an NzbMetaEditor instance.
 
@@ -306,7 +301,7 @@ class NzbMetaEditor:
         self._nzbdict = nzb_to_dict(self._nzb)
 
     @classmethod
-    def from_file(cls, nzb: StrPath, *, encoding: str = "utf-8") -> Self:
+    def from_file(cls, nzb: StrPath, /) -> Self:
         """
         Create an NzbMetaEditor instance from an NZB file path.
 
@@ -323,11 +318,7 @@ class NzbMetaEditor:
             Returns itself.
 
         """
-        if not isinstance(encoding, str):
-            raise ValueError("encoding must be a valid string!")
-        data = realpath(nzb).read_text(encoding=encoding)
-        instance = cls(data)
-        return instance
+        return cls(read_nzb_file(nzb))
 
     def _get_meta(self) -> list[dict[str, str]] | dict[str, str] | None:
         """

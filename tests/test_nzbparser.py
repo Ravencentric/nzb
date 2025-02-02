@@ -11,7 +11,15 @@ from nzb import File, Nzb, Segment
 NZB_DIR = Path(__file__).parent.resolve() / "__nzbs__"
 
 
-def test_spec_example_nzb() -> None:
+@pytest.mark.parametrize(
+    "nzb_file",
+    (
+        NZB_DIR / "spec_example.nzb",
+        NZB_DIR / "spec_example.nzb.gz",
+    ),
+    ids=lambda x: x.name,
+)
+def test_spec_example_nzb(nzb_file: Path) -> None:
     nzb = Nzb.from_file(NZB_DIR / "spec_example.nzb")
     assert nzb.meta.title == "Your File!"
     assert nzb.meta.passwords == ("secret",)
@@ -33,8 +41,16 @@ def test_spec_example_nzb() -> None:
     assert nzb.files[0].groups == ("alt.binaries.mojo", "alt.binaries.newzbin")
 
 
-def test_big_buck_bunny() -> None:
-    nzb = Nzb.from_file(NZB_DIR / "big_buck_bunny.nzb")
+@pytest.mark.parametrize(
+    "nzb_file",
+    (
+        NZB_DIR / "big_buck_bunny.nzb",
+        NZB_DIR / "big_buck_bunny.nzb.gz",
+    ),
+    ids=lambda x: x.name,
+)
+def test_big_buck_bunny(nzb_file: Path) -> None:
+    nzb = Nzb.from_file(nzb_file)
 
     assert nzb.meta.title is None
     assert nzb.meta.passwords == ()

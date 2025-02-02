@@ -5,6 +5,7 @@ from pathlib import Path
 import pytest
 
 from nzb import InvalidNzbError, Nzb, NzbMetaEditor
+from nzb._utils import read_nzb_file
 
 NZB_DIR = Path(__file__).parent.resolve() / "__nzbs__"
 
@@ -56,17 +57,7 @@ def test_invalid_nzb_error() -> None:
         assert repr(error) == 'InvalidNzbError("Missing something in the NZB")'
 
 
-def test_meta_editor_bad_encoding() -> None:
-    with pytest.raises(ValueError, match="encoding must be a valid string!"):
-        NzbMetaEditor.from_file(NZB_DIR / "spec_example.nzb", encoding=None)  # type: ignore[arg-type]
-
-
-def test_parser_bad_encoding() -> None:
-    with pytest.raises(ValueError, match="encoding must be a valid string!"):
-        Nzb.from_file(NZB_DIR / "spec_example.nzb", encoding=None)  # type: ignore[arg-type]
-
-
-def test_saving_overwrite(tmp_path: Path) -> None:
+def test_saving_overwrite() -> None:
     with pytest.raises(FileExistsError):
         file = NZB_DIR / "spec_example.nzb"
         NzbMetaEditor.from_file(file).to_file(file)
@@ -103,3 +94,14 @@ def test_editing_invalid_nzb() -> None:
 def test_parser_exceptions(file_name: str, expected_error: str) -> None:
     with pytest.raises(InvalidNzbError, match=expected_error):
         Nzb.from_file(NZB_DIR / file_name)
+
+
+def test_read_nzb_file(tmp_path: Path) -> None:
+    with pytest.raises(InvalidNzbError, match="^Failed to read NZB file"):
+        read_nzb_file(NZB_DIR / "invalid_gzipped_nzb.nzb.gz")
+
+    tmp_file = tmp_path / "invalid_bytes.nzb"
+    tmp_file.write_bytes(bytes([255]))
+
+    with pytest.raises(InvalidNzbError, match="^Failed to read NZB file"):
+        read_nzb_file(tmp_file)

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import gzip
 import re
 from functools import cache
 from pathlib import Path
@@ -28,6 +29,28 @@ def realpath(path: StrPath, /) -> Path:
     Canonicalize a given path.
     """
     return Path(path).expanduser().resolve()
+
+
+def read_nzb_file(path: StrPath, /) -> str:
+    """
+    Read a text file and return its content as a string.
+    Handles both plain text and gzipped (.gz) files.
+    """
+    file = realpath(path)
+    encoding = "utf-8"
+    errors = "strict"
+
+    try:
+        if file.suffix.casefold() == ".gz":
+            # gzipped nzbs are fairly common (e.g., all of AnimeTosho)
+            with gzip.open(file) as f:
+                data = f.read().decode(encoding=encoding, errors=errors).strip()
+        else:
+            data = file.read_text(encoding=encoding, errors=errors)
+    except (gzip.BadGzipFile, UnicodeError) as e:
+        raise InvalidNzbError(f"Failed to read NZB file '{file}': {e}") from None
+
+    return data
 
 
 def nzb_to_dict(nzb: str) -> dict[str, Any]:
