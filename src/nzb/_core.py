@@ -504,7 +504,7 @@ class NzbMetaEditor:
                 return self
         else:
             new_meta = [row for row in meta if row["@type"] != key]
-            self._nzbdict["nzb"]["head"]["meta"] = new_meta
+            self._nzbdict["nzb"]["head"]["meta"] = sort_meta(new_meta)
             return self
 
     def clear(self) -> Self:
