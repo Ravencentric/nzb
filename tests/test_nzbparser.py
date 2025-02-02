@@ -25,13 +25,12 @@ def test_spec_example_nzb() -> None:
     assert nzb.file.extension == "r01"
     assert nzb.size == 106895
     assert len(nzb.files[0].segments) == 2
-    assert set(nzb.files[0].segments) == set(
-        (
-            Segment(size=102394, number=1, message_id="123456789abcdef@news.newzbin.com"),
-            Segment(size=4501, number=2, message_id="987654321fedbca@news.newzbin.com"),
-        )
+    assert nzb.files[0].segments == (
+        Segment(size=102394, number=1, message_id="123456789abcdef@news.newzbin.com"),
+        Segment(size=4501, number=2, message_id="987654321fedbca@news.newzbin.com"),
     )
-    assert set(nzb.files[0].groups) == set(("alt.binaries.mojo", "alt.binaries.newzbin"))
+
+    assert nzb.files[0].groups == ("alt.binaries.mojo", "alt.binaries.newzbin")
 
 
 def test_big_buck_bunny() -> None:
@@ -51,6 +50,12 @@ def test_big_buck_bunny() -> None:
     assert nzb.size == 22704889
     assert [file.subject for file in nzb.files] == [
         '[1/5] - "Big Buck Bunny - S01E01.mkv" yEnc (1/24) 16981056',
+        '[2/5] - "Big Buck Bunny - S01E01.mkv.par2" yEnc (1/1) 920',
+        '[3/5] - "Big Buck Bunny - S01E01.mkv.vol00+01.par2" yEnc (1/2) 717788',
+        '[4/5] - "Big Buck Bunny - S01E01.mkv.vol01+02.par2" yEnc (1/3) 1434656',
+        '[5/5] - "Big Buck Bunny - S01E01.mkv.vol03+04.par2" yEnc (1/5) 2869192',
+    ]
+    assert [file.subject for file in nzb.par2_files] == [
         '[2/5] - "Big Buck Bunny - S01E01.mkv.par2" yEnc (1/1) 920',
         '[3/5] - "Big Buck Bunny - S01E01.mkv.vol00+01.par2" yEnc (1/2) 717788',
         '[4/5] - "Big Buck Bunny - S01E01.mkv.vol01+02.par2" yEnc (1/3) 1434656',
@@ -106,6 +111,12 @@ def test_valid_nzb_with_one_missing_segment() -> None:
 
     assert [file.subject for file in nzb.files] == [
         '[1/5] - "Big Buck Bunny - S01E01.mkv" yEnc (1/24) 16981056',
+        '[2/5] - "Big Buck Bunny - S01E01.mkv.par2" yEnc (1/1) 920',
+        '[3/5] - "Big Buck Bunny - S01E01.mkv.vol00+01.par2" yEnc (1/2) 717788',
+        '[4/5] - "Big Buck Bunny - S01E01.mkv.vol01+02.par2" yEnc (1/3) 1434656',
+        '[5/5] - "Big Buck Bunny - S01E01.mkv.vol03+04.par2" yEnc (1/5) 2869192',
+    ]
+    assert [file.subject for file in nzb.par2_files] == [
         '[2/5] - "Big Buck Bunny - S01E01.mkv.par2" yEnc (1/1) 920',
         '[3/5] - "Big Buck Bunny - S01E01.mkv.vol00+01.par2" yEnc (1/2) 717788',
         '[4/5] - "Big Buck Bunny - S01E01.mkv.vol01+02.par2" yEnc (1/3) 1434656',

@@ -223,11 +223,18 @@ class Nzb(ParentModel):
         return tuple(natsorted(groupset))
 
     @cached_property
+    def par2_files(self) -> tuple[File, ...]:
+        """
+        Tuple of par2 files in the NZB.
+        """
+        return tuple(natsorted((file for file in self.files if file.is_par2()), key=lambda f: f.subject))
+
+    @cached_property
     def par2_size(self) -> int:
         """
         Total size of all the `.par2` files.
         """
-        return sum(file.size for file in self.files if file.is_par2())
+        return sum(file.size for file in self.par2_files)
 
     @cached_property
     def par2_percentage(self) -> float:
