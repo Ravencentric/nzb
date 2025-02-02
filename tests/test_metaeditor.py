@@ -3,6 +3,8 @@ from __future__ import annotations
 import textwrap
 from pathlib import Path
 
+import pytest
+
 from nzb import Nzb, NzbMetaEditor
 
 NZB_DIR = Path(__file__).parent.resolve() / "__nzbs__"
@@ -13,9 +15,16 @@ def dedent(s: str) -> str:
     return textwrap.dedent(s).strip()
 
 
-def test_meta_clear() -> None:
-    nzb = NZB_DIR / "spec_example.nzb"
-    edited = NzbMetaEditor.from_file(nzb).clear().to_str()
+@pytest.mark.parametrize(
+    "nzb_file",
+    (
+        NZB_DIR / "spec_example.nzb",
+        NZB_DIR / "spec_example.nzb.gz",
+    ),
+    ids=lambda x: x.name,
+)
+def test_meta_clear(nzb_file: Path) -> None:
+    edited = NzbMetaEditor.from_file(nzb_file).clear().to_str()
     assert edited == dedent("""
     <?xml version="1.0" encoding="utf-8"?>
     <!DOCTYPE nzb PUBLIC "-//newzBin//DTD NZB 1.1//EN" "http://www.newzbin.com/DTD/nzb/nzb-1.1.dtd">
