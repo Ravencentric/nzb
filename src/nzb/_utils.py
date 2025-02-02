@@ -4,10 +4,15 @@ import re
 from functools import cache
 from pathlib import Path
 from typing import TYPE_CHECKING
+from xml.parsers.expat import ExpatError
+
+import xmltodict
+
+from nzb._exceptions import InvalidNzbError
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Iterable
-    from typing import ParamSpec, TypeVar
+    from typing import Any, ParamSpec, TypeVar
 
     from nzb._types import StrPath
 
@@ -23,6 +28,17 @@ def realpath(path: StrPath, /) -> Path:
     Canonicalize a given path.
     """
     return Path(path).expanduser().resolve()
+
+
+def nzb_to_dict(nzb: str) -> dict[str, Any]:
+    """
+    xmltodict.parse() raises ExpatError if there's a newline at the start,
+    so we use this wrapper that calls .strip() before passing it on to xmltodict.
+    """
+    try:
+        return xmltodict.parse(nzb.strip())
+    except ExpatError as e:
+        raise InvalidNzbError(e.args[0]) from None
 
 
 def construct_meta(

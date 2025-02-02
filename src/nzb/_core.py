@@ -4,16 +4,13 @@ from collections import OrderedDict
 from functools import cached_property
 from pathlib import Path
 from typing import TYPE_CHECKING, Literal, overload
-from xml.parsers.expat import ExpatError
 
+import xmltodict
 from natsort import natsorted
-from xmltodict import parse as xmltodict_parse
-from xmltodict import unparse as xmltodict_unparse
 
-from nzb._exceptions import InvalidNzbError
 from nzb._models import File, Meta, ParentModel
 from nzb._parser import parse_doctype, parse_files, parse_metadata
-from nzb._utils import construct_meta, realpath, remove_meta_fields, sort_meta
+from nzb._utils import construct_meta, nzb_to_dict, realpath, remove_meta_fields, sort_meta
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
@@ -99,22 +96,7 @@ class Nzb(ParentModel):
             Raised if the NZB is invalid.
 
         """
-        try:
-            # Note: the .strip() is important, otherwise we get an ExpatError:
-            # xml.parsers.expat.ExpatError: XML or text declaration not at start of entity: line 2, column 0
-            # This can be easily reproduced with:
-            #
-            # ```py
-            # text = """
-            # <xml>
-            # """
-            # Nzb.from_str(text)
-            #
-            # ```
-            nzbdict = xmltodict_parse(nzb.strip())
-        except ExpatError as error:
-            raise InvalidNzbError(error.args[0]) from None
-
+        nzbdict = nzb_to_dict(nzb)
         meta = parse_metadata(nzbdict)
         files = parse_files(nzbdict)
 
@@ -321,21 +303,7 @@ class NzbMetaEditor:
 
         """
         self._nzb = nzb
-        try:
-            # Note: the .strip() is important, otherwise we get an ExpatError:
-            # xml.parsers.expat.ExpatError: XML or text declaration not at start of entity: line 2, column 0
-            # This can be easily reproduced with:
-            #
-            # ```py
-            # text = """
-            # <xml>
-            # """
-            # NzbMetaEditor(text)
-            #
-            # ```
-            self._nzbdict = xmltodict_parse(self._nzb.strip())
-        except ExpatError as error:
-            raise InvalidNzbError(error.args[0]) from None
+        self._nzbdict = nzb_to_dict(self._nzb)
 
     @classmethod
     def from_file(cls, nzb: StrPath, *, encoding: str = "utf-8") -> Self:
@@ -534,7 +502,7 @@ class NzbMetaEditor:
             Edited NZB.
 
         """
-        unparsed = xmltodict_unparse(self._nzbdict, encoding="utf-8", pretty=True, indent="    ")
+        unparsed = xmltodict.unparse(self._nzbdict, encoding="utf-8", pretty=True, indent="    ")
 
         if doctype := parse_doctype(self._nzb):
             # see: https://github.com/martinblech/xmltodict/issues/351
