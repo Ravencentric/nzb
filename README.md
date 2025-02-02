@@ -17,7 +17,7 @@
 
 
 ![GitHub Build Workflow Status](https://img.shields.io/github/actions/workflow/status/Ravencentric/nzb/release.yml)
-![GitHub Tests Workflow Status](https://img.shields.io/github/actions/workflow/status/ravencentric/nzb/test.yml?label=tests)
+![GitHub Tests Workflow Status](https://img.shields.io/github/actions/workflow/status/ravencentric/nzb/tests.yml?label=tests)
 [![Codecov Status](https://codecov.io/gh/Ravencentric/nzb/graph/badge.svg?token=FFSOFFOM6J)](https://codecov.io/gh/Ravencentric/nzb)
 
 </div>

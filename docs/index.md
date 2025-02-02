@@ -19,7 +19,7 @@
 
 <p align="center">
 <img src="https://img.shields.io/github/actions/workflow/status/Ravencentric/nzb/release.yml?" alt="GitHub Build Workflow Status">
-<img src="https://img.shields.io/github/actions/workflow/status/Ravencentric/nzb/test.yml?label=tests" alt="GitHub Tests Workflow Status">
+<img src="https://img.shields.io/github/actions/workflow/status/Ravencentric/nzb/tests.yml?label=tests" alt="GitHub Tests Workflow Status">
 <a href="https://codecov.io/gh/Ravencentric/nzb"><img src="https://codecov.io/gh/Ravencentric/nzb/graph/badge.svg?token=FFSOFFOM6J" alt="Codecov Status"></a>
 </p>
 
