@@ -242,3 +242,5 @@ def test_json_roundtrip(nzb_file: str) -> None:
 
     assert original == deserialized
     assert original_rnzb == deserialized_rnzb
+
+    assert deserialized.to_json(pretty=True) == deserialized_rnzb.to_json(pretty=True)

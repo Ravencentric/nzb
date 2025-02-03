@@ -1,20 +1,16 @@
 from __future__ import annotations
 
 import re
+from datetime import datetime
 from functools import cached_property
 from os.path import splitext
 
-from pydantic import BaseModel, ConfigDict
+from msgspec import Struct
 
-from nzb._types import UTCDateTime
 from nzb._utils import name_is_par2, name_is_rar, stem_is_obfuscated
 
 
-class ParentModel(BaseModel):
-    model_config = ConfigDict(frozen=True, str_strip_whitespace=True)
-
-
-class Meta(ParentModel):
+class Meta(Struct, frozen=True, eq=True, kw_only=True, cache_hash=True, dict=True):
     """Optional creator-definable metadata for the contents of the NZB."""
 
     title: str | None = None
@@ -30,7 +26,7 @@ class Meta(ParentModel):
     """Category."""
 
 
-class Segment(ParentModel):
+class Segment(Struct, frozen=True, eq=True, kw_only=True, cache_hash=True, dict=True):
     """One part segment of a file."""
 
     size: int
@@ -41,13 +37,13 @@ class Segment(ParentModel):
     """Message ID of the segment."""
 
 
-class File(ParentModel):
+class File(Struct, frozen=True, eq=True, kw_only=True, cache_hash=True, dict=True):
     """Represents a complete file, consisting of segments that make up a file."""
 
     poster: str
     """The poster of the file."""
 
-    posted_at: UTCDateTime
+    posted_at: datetime
     """The date and time when the file was posted, in UTC."""
 
     subject: str

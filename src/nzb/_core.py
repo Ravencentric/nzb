@@ -5,10 +5,11 @@ from functools import cached_property
 from pathlib import Path
 from typing import TYPE_CHECKING, Literal, overload
 
+import msgspec
 import xmltodict
 from natsort import natsorted
 
-from nzb._models import File, Meta, ParentModel
+from nzb._models import File, Meta
 from nzb._parser import parse_doctype, parse_files, parse_metadata
 from nzb._utils import construct_meta, nzb_to_dict, read_nzb_file, realpath, remove_meta_fields, sort_meta
 
@@ -20,7 +21,7 @@ if TYPE_CHECKING:
     from nzb._types import StrPath
 
 
-class Nzb(ParentModel):
+class Nzb(msgspec.Struct, frozen=True, eq=True, kw_only=True, cache_hash=True, dict=True):
     """
     Represents a complete NZB file.
 
@@ -147,7 +148,7 @@ class Nzb(ParentModel):
             Raised if the NZB is invalid.
 
         """
-        return cls.model_validate_json(json)
+        return msgspec.json.decode(json, type=cls)
 
     def to_json(self, *, pretty: bool = False) -> str:
         """
@@ -164,8 +165,12 @@ class Nzb(ParentModel):
             JSON string representing the NZB.
 
         """
-        indent = 2 if pretty else None
-        return self.model_dump_json(indent=indent)
+        jsonified = msgspec.json.encode(self).decode()
+
+        if pretty:
+            return msgspec.json.format(jsonified)
+
+        return jsonified
 
     @cached_property
     def size(self) -> int:
