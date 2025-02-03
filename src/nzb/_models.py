@@ -4,17 +4,23 @@ import re
 from datetime import datetime
 from functools import cached_property
 from os.path import splitext
-from typing import dataclass_transform
+from typing import TYPE_CHECKING
 
 from msgspec import Struct
 
 from nzb._utils import name_is_par2, name_is_rar, stem_is_obfuscated
 
+if TYPE_CHECKING:
+    from typing_extensions import dataclass_transform
 
-# https://github.com/jcrist/msgspec/issues/657
-@dataclass_transform(frozen_default=True)
-class Base(Struct, frozen=True, eq=True, cache_hash=True, dict=True):
-    pass
+    # https://github.com/jcrist/msgspec/issues/657
+    @dataclass_transform(frozen_default=True)
+    class Base(Struct, frozen=True, eq=True, cache_hash=True, dict=True):
+        pass
+else:
+
+    class Base(Struct, frozen=True, eq=True, cache_hash=True, dict=True):
+        pass
 
 
 class Meta(Base, kw_only=True):
