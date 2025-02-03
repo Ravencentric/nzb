@@ -9,7 +9,7 @@ import msgspec
 import xmltodict
 from natsort import natsorted
 
-from nzb._models import File, Meta
+from nzb._models import Base, File, Meta
 from nzb._parser import parse_doctype, parse_files, parse_metadata
 from nzb._utils import construct_meta, nzb_to_dict, read_nzb_file, realpath, remove_meta_fields, sort_meta
 
@@ -21,7 +21,7 @@ if TYPE_CHECKING:
     from nzb._types import StrPath
 
 
-class Nzb(msgspec.Struct, frozen=True, eq=True, kw_only=True, cache_hash=True, dict=True):
+class Nzb(Base, kw_only=True):
     """
     Represents a complete NZB file.
 

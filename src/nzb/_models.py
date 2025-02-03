@@ -4,13 +4,20 @@ import re
 from datetime import datetime
 from functools import cached_property
 from os.path import splitext
+from typing import dataclass_transform
 
 from msgspec import Struct
 
 from nzb._utils import name_is_par2, name_is_rar, stem_is_obfuscated
 
 
-class Meta(Struct, frozen=True, eq=True, kw_only=True, cache_hash=True, dict=True):
+# https://github.com/jcrist/msgspec/issues/657
+@dataclass_transform(frozen_default=True)
+class Base(Struct, frozen=True, eq=True, cache_hash=True, dict=True):
+    pass
+
+
+class Meta(Base, kw_only=True):
     """Optional creator-definable metadata for the contents of the NZB."""
 
     title: str | None = None
@@ -26,7 +33,7 @@ class Meta(Struct, frozen=True, eq=True, kw_only=True, cache_hash=True, dict=Tru
     """Category."""
 
 
-class Segment(Struct, frozen=True, eq=True, kw_only=True, cache_hash=True, dict=True):
+class Segment(Base, kw_only=True):
     """One part segment of a file."""
 
     size: int
@@ -37,7 +44,7 @@ class Segment(Struct, frozen=True, eq=True, kw_only=True, cache_hash=True, dict=
     """Message ID of the segment."""
 
 
-class File(Struct, frozen=True, eq=True, kw_only=True, cache_hash=True, dict=True):
+class File(Base, kw_only=True):
     """Represents a complete file, consisting of segments that make up a file."""
 
     poster: str
