@@ -1,30 +1,13 @@
-<br/>
-<p align="center">
-  <a href="https://github.com/Ravencentric/nzb">
-    <img src="https://raw.githubusercontent.com/Ravencentric/nzb/main/docs/assets/logo.png" alt="Logo" width="200">
-  </a>
-  <p align="center">
-    A spec compliant parser and meta editor for NZB files
-    <br/>
-    <br/>
-  </p>
-</p>
+# nzb
 
-<p align="center">
-<a href="https://pypi.org/project/nzb/"><img src="https://img.shields.io/pypi/v/nzb" alt="PyPI - Version" ></a>
-<img src="https://img.shields.io/pypi/pyversions/nzb" alt="PyPI - Python Version">
-<img src="https://img.shields.io/github/license/Ravencentric/nzb" alt="License">
-<img src="https://img.shields.io/pypi/types/nzb" alt="PyPI - Types">
-</p>
+[![PyPI - Version](https://img.shields.io/pypi/v/nzb?link=https%3A%2F%2Fpypi.org%2Fproject%2Fnzb%2F)](https://pypi.org/project/nzb/)
+![PyPI - Python Version](https://img.shields.io/pypi/pyversions/nzb)
+![License](https://img.shields.io/github/license/Ravencentric/nzb)
+![PyPI - Types](https://img.shields.io/pypi/types/nzb)
 
-<p align="center">
-<img src="https://img.shields.io/github/actions/workflow/status/Ravencentric/nzb/release.yml?" alt="GitHub Build Workflow Status">
-<img src="https://img.shields.io/github/actions/workflow/status/Ravencentric/nzb/tests.yml?label=tests" alt="GitHub Tests Workflow Status">
-<a href="https://codecov.io/gh/Ravencentric/nzb"><img src="https://codecov.io/gh/Ravencentric/nzb/graph/badge.svg?token=FFSOFFOM6J" alt="Codecov Status"></a>
-</p>
-
-
-## About
+![GitHub Build Workflow Status](https://img.shields.io/github/actions/workflow/status/Ravencentric/nzb/release.yml)
+![GitHub Tests Workflow Status](https://img.shields.io/github/actions/workflow/status/ravencentric/nzb/tests.yml?label=tests)
+[![Codecov Status](https://codecov.io/gh/Ravencentric/nzb/graph/badge.svg?token=FFSOFFOM6J)](https://codecov.io/gh/Ravencentric/nzb)
 
 A [spec](https://sabnzbd.org/wiki/extra/nzb-spec) compliant parser and meta editor for NZB files.
 
