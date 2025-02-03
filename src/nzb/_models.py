@@ -113,6 +113,38 @@ class File(Base, kw_only=True):
             _, ext = splitext(self.name)
             return ext.removeprefix(".")
 
+    def has_extension(self, ext: str, /) -> bool:
+        """
+        Check if the file has the specified extension.
+
+        This method ensures consistent extension comparison
+        by normalizing the extension (removing any leading dot)
+        and handling case-folding.
+
+        Parameters
+        ----------
+        ext : str
+            Extension to check for, with or without a leading dot (e.g., `.txt` or `txt`).
+
+        Returns
+        -------
+        bool
+            `True` if the file has the specified extension, `False` otherwise.
+
+        Examples
+        --------
+        ```python
+        >>> file.has_extension('.TXT')  # True for 'file.txt'
+        True
+        >>> file.has_extension('txt')   # Also True for 'file.txt'
+        True
+        ```
+
+        """
+        if not self.extension:
+            return False
+        return self.extension.casefold() == ext.casefold().removeprefix(".")
+
     def is_par2(self) -> bool:
         """
         Return `True` if the file is a `.par2` file, `False` otherwise.

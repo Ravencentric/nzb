@@ -63,6 +63,9 @@ def test_big_buck_bunny(nzb_file: Path) -> None:
     assert nzb.file.name == "Big Buck Bunny - S01E01.mkv"
     assert nzb.file.stem == "Big Buck Bunny - S01E01"
     assert nzb.file.extension == "mkv"
+    assert nzb.has_extension(".mkv") is True
+    assert nzb.has_extension("mkv") is True
+    assert nzb.has_extension("blah") is False
     assert nzb.size == 22704889
     assert [file.subject for file in nzb.files] == [
         '[1/5] - "Big Buck Bunny - S01E01.mkv" yEnc (1/24) 16981056',
@@ -125,6 +128,10 @@ def test_big_buck_bunny(nzb_file: Path) -> None:
 def test_valid_nzb_with_one_missing_segment() -> None:
     nzb = Nzb.from_file(NZB_DIR / "valid_nzb_with_one_missing_segment.nzb")
 
+    assert nzb.has_extension(".mkv") is True
+    assert nzb.has_extension("mkv") is True
+    assert nzb.has_extension("blah") is False
+
     assert [file.subject for file in nzb.files] == [
         '[1/5] - "Big Buck Bunny - S01E01.mkv" yEnc (1/24) 16981056',
         '[2/5] - "Big Buck Bunny - S01E01.mkv.par2" yEnc (1/1) 920',
@@ -185,6 +192,7 @@ def test_bad_subject() -> None:
     assert nzb.files[0].name is None
     assert nzb.files[0].stem is None
     assert nzb.files[0].extension is None
+    assert nzb.files[0].has_extension("mkv") is False
     assert nzb.files[0].is_par2() is False
     assert nzb.files[0].is_rar() is False
     assert nzb.is_rar() is False

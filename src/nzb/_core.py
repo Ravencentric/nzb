@@ -67,15 +67,6 @@ class Nzb(Base, kw_only=True):
     files: tuple[File, ...]
     """File objects representing the files included in the NZB."""
 
-    @cached_property
-    def file(self) -> File:
-        """
-        The main content file (episode, movie, etc) in the NZB.
-        This is determined by finding the largest file in the NZB
-        and may not always be accurate.
-        """
-        return max(self.files, key=lambda file: file.size)
-
     @classmethod
     def from_str(cls, nzb: str, /) -> Self:
         """
@@ -173,6 +164,15 @@ class Nzb(Base, kw_only=True):
         return jsonified
 
     @cached_property
+    def file(self) -> File:
+        """
+        The main content file (episode, movie, etc) in the NZB.
+        This is determined by finding the largest file in the NZB
+        and may not always be accurate.
+        """
+        return max(self.files, key=lambda file: file.size)
+
+    @cached_property
     def size(self) -> int:
         """Total size of all the files in the NZB."""
         return sum(file.size for file in self.files)
@@ -224,6 +224,28 @@ class Nzb(Base, kw_only=True):
         Percentage of the size of all the `.par2` files relative to the total size.
         """
         return (self.par2_size / self.size) * 100
+
+    def has_extension(self, ext: str, /) -> bool:
+        """
+        Check if any file in the NZB has the specified extension.
+
+        This method ensures consistent extension comparison
+        by normalizing the extension (removing any leading dot)
+        and handling case-folding.
+
+        Parameters
+        ----------
+        ext : str
+            Extension to check for, with or without a leading dot (e.g., `.txt` or `txt`).
+
+        Returns
+        -------
+        bool
+            True if any file in the collection has the specified extension, False otherwise.
+        ```
+
+        """
+        return any(f.has_extension(ext) for f in self.files)
 
     def has_rar(self) -> bool:
         """
@@ -314,8 +336,6 @@ class NzbMetaEditor:
         ----------
         nzb : StrPath
             File path to the NZB.
-        encoding : str, optional
-            The encoding used to open the file.
 
         Returns
         -------
