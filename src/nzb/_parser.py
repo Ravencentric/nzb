@@ -8,6 +8,7 @@ from __future__ import annotations
 import re
 from typing import Any, TypeAlias, cast
 
+import msgspec
 from natsort import natsorted
 
 from nzb._exceptions import InvalidNzbError
@@ -82,8 +83,8 @@ def parse_metadata(nzb: dict[str, Any]) -> Meta:
 
     return Meta(
         title=title,
-        passwords=passwords,  # type: ignore[arg-type]
-        tags=tags,  # type: ignore[arg-type]
+        passwords=tuple(passwords),
+        tags=tuple(tags),
         category=category,
     )
 
@@ -124,16 +125,16 @@ def parse_segments(segmentdict: dict[str, list[dict[str, str]] | dict[str, str] 
 
     for segment in segments:
         try:
-            size = segment["@bytes"]
-            number = segment["@number"]
+            size = int(segment["@bytes"])
+            number = int(segment["@number"])
             message_id = segment["#text"]
-        except KeyError:
+        except (KeyError, ValueError):
             # This segment is broken
             # We do not error here because a few missing
             # segments don't invalidate the nzb.
             continue
 
-        segmentlist.append(Segment(size=size, number=number, message_id=message_id))  # type: ignore[arg-type]
+        segmentlist.append(Segment(size=size, number=number, message_id=message_id))
 
     return tuple(natsorted(segmentlist, key=lambda seg: seg.number))
 
@@ -197,15 +198,21 @@ def parse_files(nzb: dict[str, Any]) -> tuple[File, ...]:
         else:
             grouplist.extend(groups)
 
-        filelist.append(
-            File(
-                poster=file.get("@poster"),
-                posted_at=file.get("@date"),
-                subject=file.get("@subject"),
-                groups=natsorted(grouplist),  # type: ignore[arg-type]
-                segments=parse_segments(file.get("segments")),
+        try:
+            _file = msgspec.convert(
+                {
+                    "poster": file.get("@poster"),
+                    "posted_at": file.get("@date"),
+                    "subject": file.get("@subject"),
+                    "groups": natsorted(grouplist),
+                    "segments": parse_segments(file.get("segments")),
+                },
+                type=File,
+                strict=False,
             )
-        )
+        except msgspec.ValidationError as e:
+            raise InvalidNzbError(str(e)) from None
+        filelist.append(_file)
 
     if not filelist:  # pragma: no cover
         # I cannot think of any case where this will ever be raised

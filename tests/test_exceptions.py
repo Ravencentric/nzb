@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import textwrap
 from pathlib import Path
 
 import pytest
@@ -105,3 +106,30 @@ def test_read_nzb_file(tmp_path: Path) -> None:
 
     with pytest.raises(InvalidNzbError, match="^Failed to read NZB file"):
         read_nzb_file(tmp_file)
+
+
+def test_nzb_with_missing_file_attributes() -> None:
+    nzb = textwrap.dedent("""
+    <?xml version="1.0" encoding="iso-8859-1" ?>
+    <!DOCTYPE nzb PUBLIC "-//newzBin//DTD NZB 1.1//EN" "http://www.newzbin.com/DTD/nzb/nzb-1.1.dtd">
+    <nzb xmlns="http://www.newzbin.com/DTD/2003/nzb">
+        <head>
+            <meta type="title">Your File!</meta>
+            <meta type="password">secret</meta>
+            <meta type="tag">HD</meta>
+            <meta type="category">TV</meta>
+        </head>
+        <file poster="Joe Bloggs &lt;bloggs@nowhere.example&gt;" date="not a date" subject="Here's your file!  abc-mr2a.r01 (1/2)">
+            <groups>
+                <group>alt.binaries.newzbin</group>
+                <group>alt.binaries.mojo</group>
+            </groups>
+            <segments>
+                <segment bytes="102394" number="1">123456789abcdef@news.newzbin.com</segment>
+                <segment bytes="4501" number="2">987654321fedbca@news.newzbin.com</segment>
+            </segments>
+        </file>
+    </nzb>
+    """).strip()
+    with pytest.raises(InvalidNzbError, match=r"Invalid RFC3339 encoded datetime - at `\$\.posted_at`"):
+        Nzb.from_str(nzb)
