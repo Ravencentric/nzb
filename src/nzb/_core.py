@@ -241,7 +241,7 @@ class Nzb(Base, kw_only=True):
         Returns
         -------
         bool
-            True if any file in the collection has the specified extension, False otherwise.
+            `True` if any file in the NZB has the specified extension, `False` otherwise.
         ```
 
         """
