@@ -40,6 +40,9 @@ def read_nzb_file(path: StrPath, /) -> str:
     encoding = "utf-8"
     errors = "strict"
 
+    if not file.is_file():
+        raise FileNotFoundError(file)
+
     try:
         if file.suffix.casefold() == ".gz":
             # gzipped nzbs are fairly common (e.g., all of AnimeTosho)

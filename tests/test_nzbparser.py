@@ -125,8 +125,16 @@ def test_big_buck_bunny(nzb_file: Path) -> None:
     )
 
 
-def test_valid_nzb_with_one_missing_segment() -> None:
-    nzb = Nzb.from_file(NZB_DIR / "valid_nzb_with_one_missing_segment.nzb")
+@pytest.mark.parametrize(
+    "nzb_file",
+    (
+        NZB_DIR / "valid_nzb_with_bad_segments.nzb",
+        NZB_DIR / "valid_nzb_with_bad_segments.nzb.gz",
+    ),
+    ids=lambda x: x.name,
+)
+def test_valid_nzb_with_one_missing_segment(nzb_file: Path) -> None:
+    nzb = Nzb.from_file(nzb_file)
 
     assert nzb.has_extension(".mkv") is True
     assert nzb.has_extension("mkv") is True
@@ -169,9 +177,7 @@ def test_valid_nzb_with_one_missing_segment() -> None:
             Segment(size=739490, number=8, message_id="38006019d94f4ecc8f19c389c00f1ebe-7841585708380@example"),
             Segment(size=739667, number=9, message_id="b75a2425bef24fd5affb00dc3db789f6-7051027232703@example"),
             Segment(size=739540, number=10, message_id="79a027e3bfde458ea2bd0db1632fc84e-7270120407913@example"),
-            Segment(size=739657, number=11, message_id="fb2bd74e1257487a9240ef0cf81765cc-7147741101314@example"),
-            Segment(size=739647, number=12, message_id="d39ca8be78c34e3fa6f3211f1b397b3a-4725950858191@example"),
-            # 13th Segment is missing here
+            # 11-13 segments are missing here
             Segment(size=739721, number=14, message_id="2f1cec363ed24584b4127af86ac312ad-7204153818612@example"),
             Segment(size=739740, number=15, message_id="30ff3514896543a8ac91ec80346a5d40-9134304686352@example"),
             Segment(size=739538, number=16, message_id="1f75cfa20d884b5b972cfd2e9ebef249-8919850122587@example"),
@@ -227,7 +233,7 @@ def test_multi_rar_nzb() -> None:
     [
         "spec_example.nzb",
         "big_buck_bunny.nzb",
-        "valid_nzb_with_one_missing_segment.nzb",
+        "valid_nzb_with_bad_segments.nzb",
         "bad_subject.nzb",
         "non_standard_meta.nzb",
         "one_rar_file.nzb",

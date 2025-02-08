@@ -112,6 +112,9 @@ class Nzb(Base, kw_only=True):
 
         Raises
         ------
+        FileNotFoundError
+            Raised if the specified file doesn't exist.
+
         InvalidNzbError
             Raised if the NZB is invalid.
 
