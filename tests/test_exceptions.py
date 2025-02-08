@@ -133,3 +133,8 @@ def test_nzb_with_missing_file_attributes() -> None:
     """).strip()
     with pytest.raises(InvalidNzbError, match=r"Invalid RFC3339 encoded datetime - at `\$\.posted_at`"):
         Nzb.from_str(nzb)
+
+
+def test_non_existent_file() -> None:
+    with pytest.raises(FileNotFoundError, match="blahblah"):
+        Nzb.from_file("blahblah")
