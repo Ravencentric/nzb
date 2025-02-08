@@ -20,7 +20,7 @@ NZB_DIR = Path(__file__).parent.resolve() / "__nzbs__"
     ids=lambda x: x.name,
 )
 def test_spec_example_nzb(nzb_file: Path) -> None:
-    nzb = Nzb.from_file(NZB_DIR / "spec_example.nzb")
+    nzb = Nzb.from_file(nzb_file)
     assert nzb.meta.title == "Your File!"
     assert nzb.meta.passwords == ("secret",)
     assert nzb.meta.tags == ("HD",)
@@ -231,18 +231,16 @@ def test_multi_rar_nzb() -> None:
 @pytest.mark.parametrize(
     "nzb_file",
     [
-        "spec_example.nzb",
-        "big_buck_bunny.nzb",
-        "valid_nzb_with_bad_segments.nzb",
-        "bad_subject.nzb",
-        "non_standard_meta.nzb",
-        "one_rar_file.nzb",
-        "multi_rar.nzb",
+        NZB_DIR / "spec_example.nzb",
+        NZB_DIR / "big_buck_bunny.nzb",
+        NZB_DIR / "valid_nzb_with_bad_segments.nzb",
+        NZB_DIR / "bad_subject.nzb",
+        NZB_DIR / "non_standard_meta.nzb",
+        NZB_DIR / "one_rar_file.nzb",
+        NZB_DIR / "multi_rar.nzb",
     ],
 )
-def test_json_roundtrip(nzb_file: str) -> None:
-    nzb_file = NZB_DIR / nzb_file  # type: ignore[assignment]
-
+def test_json_roundtrip(nzb_file: Path) -> None:
     original = Nzb.from_file(nzb_file)
     original_rnzb = RustNzb.from_file(nzb_file)
 
