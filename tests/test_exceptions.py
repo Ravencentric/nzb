@@ -120,7 +120,7 @@ def test_editing_invalid_nzb() -> None:
         ("malformed_groups.nzb", INVALID_NZB_ERROR_GROUPS_ELEMENT),
         ("malformed_segments.nzb", INVALID_NZB_ERROR_SEGMENTS_ELEMENT),
     ),
-    ids=["malformed_files", "malformed_files2", "malformed_groups", "malformed_segments"]
+    ids=["malformed_files", "malformed_files2", "malformed_groups", "malformed_segments"],
 )
 def test_parser_exceptions(file_name: str, expected_error: str) -> None:
     with pytest.raises(InvalidNzbError, match=expected_error):
