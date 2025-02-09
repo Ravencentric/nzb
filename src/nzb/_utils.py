@@ -43,15 +43,20 @@ def read_nzb_file(path: StrPath, /) -> str:
     if not file.is_file():
         raise FileNotFoundError(file)
 
+    # TODO: reject large files?
+
     try:
         if file.suffix.casefold() == ".gz":
             # gzipped nzbs are fairly common (e.g., all of AnimeTosho)
-            with gzip.open(file) as f:
-                data = f.read().decode(encoding=encoding, errors=errors).strip()
+            try:
+                with gzip.open(file) as f:
+                    data = f.read().decode(encoding=encoding, errors=errors).strip()
+            except gzip.BadGzipFile as e:
+                raise InvalidNzbError(f"Gzip decompression error for file '{file}': {e}") from None
         else:
             data = file.read_text(encoding=encoding, errors=errors)
-    except (gzip.BadGzipFile, UnicodeError) as e:
-        raise InvalidNzbError(f"Failed to read NZB file '{file}': {e}") from None
+    except (OSError, UnicodeError) as e:
+        raise InvalidNzbError(f"I/O error while reading file '{file}': {e}") from None
 
     return data
 
@@ -64,7 +69,7 @@ def nzb_to_dict(nzb: str) -> dict[str, Any]:
     try:
         return xmltodict.parse(nzb.strip())
     except ExpatError as e:
-        raise InvalidNzbError(e.args[0]) from None
+        raise InvalidNzbError(f"The NZB document is not valid XML and could not be parsed: {e.args[0]}") from None
 
 
 def construct_meta(

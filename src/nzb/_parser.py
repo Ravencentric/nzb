@@ -116,7 +116,7 @@ def parse_segments(segmentdict: dict[str, list[dict[str, str]] | dict[str, str] 
     segments = segmentdict.get("segment") if segmentdict else None
 
     if segments is None:
-        raise InvalidNzbError("Missing or malformed <segments>...</segments>!")
+        raise InvalidNzbError._from_preset("segments")
 
     if isinstance(segments, dict):
         segments = [segments]
@@ -168,7 +168,7 @@ def parse_files(nzb: dict[str, Any]) -> tuple[File, ...]:
     files = cast(FileFieldType, files)
 
     if files is None:
-        raise InvalidNzbError("Missing or malformed <file>...</file>!")
+        raise InvalidNzbError._from_preset("file")
 
     if isinstance(files, dict):
         files = [files]
@@ -191,7 +191,7 @@ def parse_files(nzb: dict[str, Any]) -> tuple[File, ...]:
         groups = cast(GroupFieldType, groups)
 
         if groups is None:
-            raise InvalidNzbError("Missing or malformed <groups>...</groups>!")
+            raise InvalidNzbError._from_preset("groups")
 
         if isinstance(groups, str):
             grouplist.append(groups)
@@ -201,23 +201,33 @@ def parse_files(nzb: dict[str, Any]) -> tuple[File, ...]:
         try:
             _file = msgspec.convert(
                 {
-                    "poster": file.get("@poster"),
-                    "posted_at": file.get("@date"),
-                    "subject": file.get("@subject"),
-                    "groups": natsorted(grouplist),
-                    "segments": parse_segments(file.get("segments")),
+                    "poster": file.get("@poster"),  # Can fail
+                    "posted_at": file.get("@date"),  # Can fail
+                    "subject": file.get("@subject"),  # Can fail
+                    "groups": natsorted(grouplist),  # Can't fail, pre-validated
+                    "segments": parse_segments(file.get("segments")),  # Can't fail, pre-validated
                 },
                 type=File,
                 strict=False,
             )
         except msgspec.ValidationError as e:
-            raise InvalidNzbError(str(e)) from None
+            # There seems to be no way to get the invalid field,
+            # other than just regexing it out of the error message.
+            if match := re.search(r"\$\.(poster|posted_at|subject)", str(e)):
+                attr = match.group(1)
+                if attr == "posted_at":
+                    attr = "date"
+                raise InvalidNzbError(f"Invalid or missing required attribute '{attr}' in a 'file' element.") from None
+            else:  # pragma: no cover
+                # This should never happen
+                raise InvalidNzbError(str(e)) from None
+
         filelist.append(_file)
 
     if not filelist:  # pragma: no cover
         # I cannot think of any case where this will ever be raised
         # but just in case
-        raise InvalidNzbError("Missing or malformed <file>...</file>!")
+        raise InvalidNzbError._from_preset("file")
 
     return tuple(natsorted(filelist, key=lambda file: file.subject))
 
