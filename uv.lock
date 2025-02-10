@@ -523,7 +523,7 @@ wheels = [
 
 [[package]]
 name = "nzb"
-version = "0.4.0"
+version = "0.4.1"
 source = { editable = "." }
 dependencies = [
     { name = "msgspec" },
@@ -541,6 +541,7 @@ dev = [
     { name = "pytest" },
     { name = "rnzb" },
     { name = "ruff" },
+    { name = "tomli" },
     { name = "types-xmltodict" },
     { name = "typing-extensions" },
 ]
@@ -559,6 +560,7 @@ test = [
     { name = "coverage", extra = ["toml"] },
     { name = "pytest" },
     { name = "rnzb" },
+    { name = "tomli" },
 ]
 
 [package.metadata]
@@ -578,6 +580,7 @@ dev = [
     { name = "pytest", specifier = ">=8.3.4" },
     { name = "rnzb", specifier = ">=0.3.1" },
     { name = "ruff", specifier = ">=0.9.3" },
+    { name = "tomli", specifier = ">=2.2.1" },
     { name = "types-xmltodict", specifier = ">=0.14.0.20241009" },
     { name = "typing-extensions", specifier = ">=4.12.2" },
 ]
@@ -596,6 +599,7 @@ test = [
     { name = "coverage", extras = ["toml"], specifier = ">=7.6.10" },
     { name = "pytest", specifier = ">=8.3.4" },
     { name = "rnzb", specifier = ">=0.3.1" },
+    { name = "tomli", specifier = ">=2.2.1" },
 ]
 
 [[package]]

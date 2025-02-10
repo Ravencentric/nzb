@@ -4,7 +4,7 @@ from nzb._core import Nzb, NzbMetaEditor
 from nzb._exceptions import InvalidNzbError
 from nzb._models import File, Meta, Segment
 
-__version__ = "0.3.0"
+__version__ = "0.4.1"
 
 __all__ = (
     "File",
