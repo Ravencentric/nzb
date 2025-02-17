@@ -194,7 +194,7 @@ def test_valid_nzb_with_one_missing_segment(nzb_file: Path) -> None:
 
 
 def test_standard_subject_with_no_quotes() -> None:
-    nzb = Nzb.from_file(NZB_DIR / "standard_subject_with_no_quotes.nzb")
+    nzb = Nzb.from_file(NZB_DIR / "standard_ish_subject_with_no_quotes.nzb")
     assert nzb.file.name == "[AC-FFF] Highschool DxD BorN - 02 [BD][1080p-Hi10p] FLAC][Dual-Audio][442E5446].mkv"
     assert nzb.file.stem == "[AC-FFF] Highschool DxD BorN - 02 [BD][1080p-Hi10p] FLAC][Dual-Audio][442E5446]"
     assert nzb.file.extension == "mkv"
