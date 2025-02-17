@@ -193,6 +193,19 @@ def test_valid_nzb_with_one_missing_segment(nzb_file: Path) -> None:
     )
 
 
+def test_standard_subject_with_no_quotes() -> None:
+    nzb = Nzb.from_file(NZB_DIR / "standard_subject_with_no_quotes.nzb")
+    assert nzb.file.name == "[AC-FFF] Highschool DxD BorN - 02 [BD][1080p-Hi10p] FLAC][Dual-Audio][442E5446].mkv"
+    assert nzb.file.stem == "[AC-FFF] Highschool DxD BorN - 02 [BD][1080p-Hi10p] FLAC][Dual-Audio][442E5446]"
+    assert nzb.file.extension == "mkv"
+    assert nzb.file.has_extension("mkv") is True
+    assert nzb.file.is_par2() is False
+    assert nzb.file.is_rar() is False
+    assert nzb.is_rar() is False
+    assert nzb.has_par2() is True
+    assert nzb.is_obfuscated() is False
+
+
 def test_bad_subject() -> None:
     nzb = Nzb.from_file(NZB_DIR / "bad_subject.nzb")
     assert nzb.files[0].name is None

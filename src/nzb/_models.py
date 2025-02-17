@@ -86,6 +86,13 @@ class File(Base, kw_only=True):
             r"\b([\w\-+()' .,]+(?:\[[\w\-/+()' .,]*][\w\-+()' .,]*)*\.[A-Za-z0-9]{2,4})\b", self.subject
         ):
             return parsed.group(1).strip()
+
+        # https://regex101.com/r/B03qZs/1
+        # [011/116] - [AC-FFF] Highschool DxD BorN - 02 [BD][1080p-Hi10p] FLAC][Dual-Audio][442E5446].mkv yEnc (1/2401) 1720916370
+        elif parsed := re.search(
+            r"^(\[|\()(\d+/\d+)(\]|\))\s-\s(.*)\syEnc\s(\[|\()(\d+/\d+)(\]|\))\s\d+", self.subject
+        ):
+            return parsed.group(4).strip() if parsed.group(4) else None
         else:
             return None
 
