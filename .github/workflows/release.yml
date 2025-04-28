@@ -22,7 +22,7 @@ jobs:
         with:
           fetch-depth: 0 # Important for changelog
 
-      - uses: astral-sh/setup-uv@v5
+      - uses: astral-sh/setup-uv@v6
         with:
           python-version: "3.13"
 
