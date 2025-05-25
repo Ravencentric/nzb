@@ -202,16 +202,17 @@ class File(Base, frozen=True, kw_only=True):
         """
         Return `True` if the file is a `.par2` file, `False` otherwise.
         """
-        return name_is_par2(self.name)
+        return False if self.name is None else name_is_par2(self.name)
 
     def is_rar(self) -> bool:
         """
         Return `True` if the file is a `.rar` file, `False` otherwise.
         """
-        return name_is_rar(self.name)
+        return False if self.name is None else name_is_rar(self.name)
 
     def is_obfuscated(self) -> bool:
         """
         Return `True` if the file is obfuscated, `False` otherwise.
         """
-        return stem_is_obfuscated(self.stem)
+        # If we can't even determine the stem, it's most certainly obfuscated.
+        return True if self.stem is None else stem_is_obfuscated(self.stem)
