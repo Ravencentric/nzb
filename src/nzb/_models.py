@@ -68,16 +68,14 @@ class Base(
         """
         return msgspec.json.decode(data, type=cls)
 
-    def to_json(self, *, indent: int = 2) -> str:
+    def to_json(self, *, pretty: bool = False) -> str:
         """
         Serialize the instance of this class into a JSON string.
 
         Parameters
         ----------
-        indent : int, optional
-            Number of spaces for indentation.
-            Set to 0 for a single line with spacing,
-            or negative to minimize size by removing extra whitespace.
+        pretty : bool, optional
+            Whether to pretty format the JSON string.
 
         Returns
         -------
@@ -85,8 +83,12 @@ class Base(
             JSON string representing this class.
 
         """
-        jsonified = msgspec.json.encode(self)
-        return msgspec.json.format(jsonified, indent=indent).decode()
+        jsonified = msgspec.json.encode(self).decode()
+
+        if pretty:
+            return msgspec.json.format(jsonified)
+
+        return jsonified
 
 
 class Meta(Base, frozen=True, kw_only=True):
