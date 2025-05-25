@@ -1,1 +1,0 @@
-::: nzb._types.StrPath

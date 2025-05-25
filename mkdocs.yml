@@ -84,5 +84,4 @@ nav:
   - API Reference:
       - Parser: api-reference/parser.md
       - Meta Editor: api-reference/meta-editor.md
-      - Types: api-reference/types.md
       - Exceptions: api-reference/exceptions.md
