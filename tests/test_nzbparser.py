@@ -40,6 +40,9 @@ def test_spec_example_nzb(nzb_file: Path) -> None:
 
     assert nzb.files[0].groups == ("alt.binaries.mojo", "alt.binaries.newzbin")
 
+    assert Nzb.from_dict(nzb.to_dict()) == nzb
+    assert Nzb.from_json(nzb.to_json()) == nzb
+
 
 @pytest.mark.parametrize(
     "nzb_file",
@@ -124,6 +127,9 @@ def test_big_buck_bunny(nzb_file: Path) -> None:
         ),
     )
 
+    assert Nzb.from_dict(nzb.to_dict()) == nzb
+    assert Nzb.from_json(nzb.to_json()) == nzb
+
 
 @pytest.mark.parametrize(
     "nzb_file",
@@ -191,6 +197,9 @@ def test_valid_nzb_with_one_missing_segment(nzb_file: Path) -> None:
             Segment(size=510541, number=24, message_id="962fddf3e07444988731b52aeaa9b2aa-1283919353788@example"),
         ),
     )
+
+    assert Nzb.from_dict(nzb.to_dict()) == nzb
+    assert Nzb.from_json(nzb.to_json()) == nzb
 
 
 def test_standard_subject_with_no_quotes() -> None:
