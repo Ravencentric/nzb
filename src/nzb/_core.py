@@ -5,6 +5,7 @@ from functools import cached_property
 from pathlib import Path
 from typing import TYPE_CHECKING, Literal, overload
 
+import msgspec
 import xmltodict
 from natsort import natsorted
 
@@ -118,6 +119,46 @@ class Nzb(Base, frozen=True, kw_only=True, dict=True):
 
         """
         return cls.from_str(read_nzb_file(nzb))
+
+    @classmethod
+    def from_json(cls, data: str | bytes, /) -> Self:
+        """
+        Create an instance of this class from JSON data.
+
+        Parameters
+        ----------
+        data : str | bytes
+            JSON data representing the instance of this class.
+
+        Returns
+        -------
+        Self
+            An instance of this class.
+
+        """
+        return msgspec.json.decode(data, type=cls)
+
+    def to_json(self, *, pretty: bool = False) -> str:
+        """
+        Serialize the instance of this class into a JSON string.
+
+        Parameters
+        ----------
+        pretty : bool, optional
+            Whether to pretty format the JSON string.
+
+        Returns
+        -------
+        str
+            JSON string representing this class.
+
+        """
+        jsonified = msgspec.json.encode(self).decode()
+
+        if pretty:
+            return msgspec.json.format(jsonified)
+
+        return jsonified
 
     @cached_property
     def file(self) -> File:

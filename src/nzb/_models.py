@@ -2,14 +2,10 @@ from __future__ import annotations
 
 from datetime import datetime
 from os.path import splitext
-from typing import TYPE_CHECKING, Any
 
 import msgspec
 
 from nzb._subparsers import extract_filename_from_subject, name_is_par2, name_is_rar, stem_is_obfuscated
-
-if TYPE_CHECKING:
-    from typing_extensions import Self
 
 
 class Base(
@@ -18,77 +14,7 @@ class Base(
     frozen=True,
     kw_only=True,
 ):
-    """Base class for AniList data structures."""
-
-    @classmethod
-    def from_dict(cls, data: dict[str, Any], /) -> Self:
-        """
-        Create an instance of this class from a dictionary.
-
-        Parameters
-        ----------
-        data : dict[str, Any]
-            Dictionary representing the instance of this class.
-
-        Returns
-        -------
-        Self
-            An instance of this class.
-
-        """
-        return msgspec.convert(data, type=cls)
-
-    def to_dict(self) -> dict[str, Any]:
-        """
-        Serialize the instance of this class into a dictionary.
-
-        Returns
-        -------
-        dict[str, Any]
-            Dictionary representing the instance of this class.
-
-        """
-        return msgspec.to_builtins(self)  # type: ignore[no-any-return]
-
-    @classmethod
-    def from_json(cls, data: str | bytes, /) -> Self:
-        """
-        Create an instance of this class from JSON data.
-
-        Parameters
-        ----------
-        data : str | bytes
-            JSON data representing the instance of this class.
-
-        Returns
-        -------
-        Self
-            An instance of this class.
-
-        """
-        return msgspec.json.decode(data, type=cls)
-
-    def to_json(self, *, pretty: bool = False) -> str:
-        """
-        Serialize the instance of this class into a JSON string.
-
-        Parameters
-        ----------
-        pretty : bool, optional
-            Whether to pretty format the JSON string.
-
-        Returns
-        -------
-        str
-            JSON string representing this class.
-
-        """
-        jsonified = msgspec.json.encode(self).decode()
-
-        if pretty:
-            return msgspec.json.format(jsonified)
-
-        return jsonified
+    """Base class for NZB data structures."""
 
 
 class Meta(Base, frozen=True, kw_only=True):
