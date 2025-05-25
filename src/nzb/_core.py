@@ -9,15 +9,14 @@ import xmltodict
 from natsort import natsorted
 
 from nzb._models import Base, File, Meta
-from nzb._parser import parse_doctype, parse_files, parse_metadata
+from nzb._parsers import parse_doctype, parse_files, parse_metadata
 from nzb._utils import construct_meta, nzb_to_dict, read_nzb_file, realpath, remove_meta_fields, sort_meta
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
 
+    from _typeshed import StrPath
     from typing_extensions import Self
-
-    from nzb._types import StrPath
 
 
 class Nzb(Base, frozen=True, kw_only=True, dict=True):

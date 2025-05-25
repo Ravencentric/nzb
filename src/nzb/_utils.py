@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import gzip
-from functools import cache
 from pathlib import Path
 from typing import TYPE_CHECKING
 from xml.parsers.expat import ExpatError
@@ -11,16 +10,10 @@ import xmltodict
 from nzb._exceptions import InvalidNzbError
 
 if TYPE_CHECKING:
-    from collections.abc import Callable, Iterable
-    from typing import Any, ParamSpec, TypeVar
+    from collections.abc import Iterable
+    from typing import Any
 
-    from nzb._types import StrPath
-
-    T = TypeVar("T")
-    P = ParamSpec("P")
-
-    def cache(user_function: Callable[P, T], /) -> Callable[P, T]:  # type: ignore[misc]
-        return user_function
+    from _typeshed import StrPath
 
 
 def realpath(path: StrPath, /) -> Path:

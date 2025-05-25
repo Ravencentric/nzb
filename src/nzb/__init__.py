@@ -4,8 +4,6 @@ from nzb._core import Nzb, NzbMetaEditor
 from nzb._exceptions import InvalidNzbError
 from nzb._models import File, Meta, Segment
 
-__version__ = "0.4.2"
-
 __all__ = (
     "File",
     "InvalidNzbError",
@@ -13,5 +11,4 @@ __all__ = (
     "Nzb",
     "NzbMetaEditor",
     "Segment",
-    "__version__",
 )
