@@ -95,7 +95,7 @@ class Nzb(Base, kw_only=True):
         return cls(meta=meta, files=files)
 
     @classmethod
-    def from_file(cls, nzb: StrPath, /) -> Nzb:
+    def from_file(cls, nzb: StrPath, /) -> Self:
         """
         Parse the given file into an [`Nzb`][nzb.Nzb].
         Handles both regular and gzipped NZB files.
@@ -107,7 +107,7 @@ class Nzb(Base, kw_only=True):
 
         Returns
         -------
-        Nzb
+        Self
             Object representing the parsed NZB file.
 
         Raises
@@ -122,7 +122,7 @@ class Nzb(Base, kw_only=True):
         return cls.from_str(read_nzb_file(nzb))
 
     @classmethod
-    def from_json(cls, json: str, /) -> Nzb:
+    def from_json(cls, json: str, /) -> Self:
         """
         Deserialize the given JSON string into an [`Nzb`][nzb.Nzb].
 
@@ -133,7 +133,7 @@ class Nzb(Base, kw_only=True):
 
         Returns
         -------
-        Nzb
+        Self
             Object representing the parsed NZB file.
 
         Raises
