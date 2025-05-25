@@ -43,8 +43,6 @@ def read_nzb_file(path: StrPath, /) -> str:
     if not file.is_file():
         raise FileNotFoundError(file)
 
-    # TODO: reject large files?
-
     try:
         if file.suffix.casefold() == ".gz":
             # gzipped nzbs are fairly common (e.g., all of AnimeTosho)
@@ -169,6 +167,36 @@ def remove_meta_fields(
 
     fields_set = {field.strip().casefold() for field in fields}
     return [item for item in meta if item["@type"].strip().casefold() not in fields_set]
+
+
+@cache
+def extract_filename_from_subject(subject: str) -> str | None:
+    """
+    Extract the complete name of the file with it's extension from the subject.
+    May return `None` if it fails to extract the name.
+
+    Parameters
+    ----------
+    subject : str
+        The subject string.
+
+    Returns
+    -------
+    str | None
+
+    """
+    # https://github.com/sabnzbd/sabnzbd/blob/02b4a116dd4b46b2d2f33f7bbf249f2294458f2e/sabnzbd/nzbstuff.py#L104-L106
+    if parsed := re.search(r'"([^"]*)"', subject):
+        return parsed.group(1).strip()
+    elif parsed := re.search(r"\b([\w\-+()' .,]+(?:\[[\w\-/+()' .,]*][\w\-+()' .,]*)*\.[A-Za-z0-9]{2,4})\b", subject):
+        return parsed.group(1).strip()
+
+    # https://regex101.com/r/B03qZs/1
+    # [011/116] - [AC-FFF] Highschool DxD BorN - 02 [BD][1080p-Hi10p] FLAC][Dual-Audio][442E5446].mkv yEnc (1/2401) 1720916370
+    elif parsed := re.search(r"^(\[|\()(\d+/\d+)(\]|\))\s-\s(.*)\syEnc\s(\[|\()(\d+/\d+)(\]|\))\s\d+", subject):
+        return parsed.group(4).strip() if parsed.group(4) else None
+    else:
+        return None
 
 
 @cache

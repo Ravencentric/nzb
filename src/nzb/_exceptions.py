@@ -61,11 +61,3 @@ class InvalidNzbError(Exception):
 
     def __repr__(self) -> str:
         return f'{self.__class__.__name__}("{self.message}")'
-
-    def __hash__(self) -> int:
-        return hash(self.message)
-
-    def __eq__(self, other: object) -> bool:
-        if not isinstance(other, InvalidNzbError):
-            return False
-        return self.message == other.message

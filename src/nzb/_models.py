@@ -1,45 +1,108 @@
 from __future__ import annotations
 
-import re
 from datetime import datetime
-from functools import cached_property
 from os.path import splitext
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
-from msgspec import Struct
+import msgspec
 
-from nzb._utils import name_is_par2, name_is_rar, stem_is_obfuscated
+from nzb._utils import extract_filename_from_subject, name_is_par2, name_is_rar, stem_is_obfuscated
 
 if TYPE_CHECKING:
-    from typing_extensions import dataclass_transform
-
-    # https://github.com/jcrist/msgspec/issues/657
-    @dataclass_transform(frozen_default=True)
-    class Base(Struct, frozen=True, eq=True, cache_hash=True, dict=True):
-        pass
-else:
-
-    class Base(Struct, frozen=True, eq=True, cache_hash=True, dict=True):
-        pass
+    from typing_extensions import Self
 
 
-class Meta(Base, kw_only=True):
+class Base(
+    msgspec.Struct,
+    forbid_unknown_fields=True,
+    frozen=True,
+    kw_only=True,
+):
+    """Base class for AniList data structures."""
+
+    @classmethod
+    def from_dict(cls, data: dict[str, Any], /) -> Self:
+        """
+        Create an instance of this class from a dictionary.
+
+        Parameters
+        ----------
+        data : dict[str, Any]
+            Dictionary representing the instance of this class.
+
+        Returns
+        -------
+        Self
+            An instance of this class.
+
+        """
+        return msgspec.convert(data, type=cls)
+
+    def to_dict(self) -> dict[str, Any]:
+        """
+        Serialize the instance of this class into a dictionary.
+
+        Returns
+        -------
+        dict[str, Any]
+            Dictionary representing the instance of this class.
+
+        """
+        return msgspec.to_builtins(self)  # type: ignore[no-any-return]
+
+    @classmethod
+    def from_json(cls, data: str | bytes, /) -> Self:
+        """
+        Create an instance of this class from JSON data.
+
+        Parameters
+        ----------
+        data : str | bytes
+            JSON data representing the instance of this class.
+
+        Returns
+        -------
+        Self
+            An instance of this class.
+
+        """
+        return msgspec.json.decode(data, type=cls)
+
+    def to_json(self, *, indent: int = 2) -> str:
+        """
+        Serialize the instance of this class into a JSON string.
+
+        Parameters
+        ----------
+        indent : int, optional
+            Number of spaces for indentation.
+            Set to 0 for a single line with spacing,
+            or negative to minimize size by removing extra whitespace.
+
+        Returns
+        -------
+        str
+            JSON string representing this class.
+
+        """
+        jsonified = msgspec.json.encode(self)
+        return msgspec.json.format(jsonified, indent=indent).decode()
+
+
+class Meta(Base, frozen=True, kw_only=True):
     """Optional creator-definable metadata for the contents of the NZB."""
 
     title: str | None = None
     """Title."""
-
-    passwords: tuple[str, ...] = ()  # Can be specified multiple times.
+    passwords: tuple[str, ...] = ()
     """Password(s)."""
-
-    tags: tuple[str, ...] = ()  # Can be specified multiple times.
+    tags: tuple[str, ...] = ()
     """Tag(s)."""
-
     category: str | None = None
     """Category."""
 
 
-class Segment(Base, kw_only=True):
+class Segment(Base, frozen=True, kw_only=True):
     """One part segment of a file."""
 
     size: int
@@ -50,53 +113,34 @@ class Segment(Base, kw_only=True):
     """Message ID of the segment."""
 
 
-class File(Base, kw_only=True):
+class File(Base, frozen=True, kw_only=True):
     """Represents a complete file, consisting of segments that make up a file."""
 
     poster: str
     """The poster of the file."""
-
     posted_at: datetime
     """The date and time when the file was posted, in UTC."""
-
     subject: str
-    """The subject of the file."""  # Ideally it contains the filename, segment count, and other relevant information.
-
-    groups: tuple[str, ...]  # Every file must have atleast one group.
+    """The subject of the file."""
+    groups: tuple[str, ...]
     """Groups that reference the file."""
-
-    segments: tuple[Segment, ...]  # Every file must have atleast one segment.
+    segments: tuple[Segment, ...]
     """Segments that make up the file."""
 
-    @cached_property
+    @property
     def size(self) -> int:
         """Size of the file calculated from the sum of segment sizes."""
         return sum(segment.size for segment in self.segments)
 
-    @cached_property
+    @property
     def name(self) -> str | None:
         """
         Complete name of the file with it's extension extracted from the subject.
         May return `None` if it fails to extract the name.
         """
-        # https://github.com/sabnzbd/sabnzbd/blob/02b4a116dd4b46b2d2f33f7bbf249f2294458f2e/sabnzbd/nzbstuff.py#L104-L106
-        if parsed := re.search(r'"([^"]*)"', self.subject):
-            return parsed.group(1).strip()
-        elif parsed := re.search(
-            r"\b([\w\-+()' .,]+(?:\[[\w\-/+()' .,]*][\w\-+()' .,]*)*\.[A-Za-z0-9]{2,4})\b", self.subject
-        ):
-            return parsed.group(1).strip()
+        return extract_filename_from_subject(self.subject)
 
-        # https://regex101.com/r/B03qZs/1
-        # [011/116] - [AC-FFF] Highschool DxD BorN - 02 [BD][1080p-Hi10p] FLAC][Dual-Audio][442E5446].mkv yEnc (1/2401) 1720916370
-        elif parsed := re.search(
-            r"^(\[|\()(\d+/\d+)(\]|\))\s-\s(.*)\syEnc\s(\[|\()(\d+/\d+)(\]|\))\s\d+", self.subject
-        ):
-            return parsed.group(4).strip() if parsed.group(4) else None
-        else:
-            return None
-
-    @cached_property
+    @property
     def stem(self) -> str | None:
         """
         Base name of the file without it's extension extracted from the [`File.name`][nzb._models.File.name].
@@ -108,7 +152,7 @@ class File(Base, kw_only=True):
             root, _ = splitext(self.name)
             return root
 
-    @cached_property
+    @property
     def extension(self) -> str | None:
         """
         Extension of the file without the leading dot extracted from the [`File.name`][nzb._models.File.name].

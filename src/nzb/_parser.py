@@ -136,7 +136,8 @@ def parse_segments(segmentdict: dict[str, list[dict[str, str]] | dict[str, str] 
 
         segmentlist.append(Segment(size=size, number=number, message_id=message_id))
 
-    return tuple(natsorted(segmentlist, key=lambda seg: seg.number))
+    segmentlist.sort(key=lambda seg: seg.number)
+    return tuple(segmentlist)
 
 
 def parse_files(nzb: dict[str, Any]) -> tuple[File, ...]:

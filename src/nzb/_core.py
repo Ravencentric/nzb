@@ -5,7 +5,6 @@ from functools import cached_property
 from pathlib import Path
 from typing import TYPE_CHECKING, Literal, overload
 
-import msgspec
 import xmltodict
 from natsort import natsorted
 
@@ -21,7 +20,7 @@ if TYPE_CHECKING:
     from nzb._types import StrPath
 
 
-class Nzb(Base, kw_only=True):
+class Nzb(Base, frozen=True, kw_only=True, dict=True):
     """
     Represents a complete NZB file.
 
@@ -102,7 +101,7 @@ class Nzb(Base, kw_only=True):
 
         Parameters
         ----------
-        nzb : str | PathLike[str]
+        nzb : StrPath
             Path to the NZB file.
 
         Returns
@@ -120,51 +119,6 @@ class Nzb(Base, kw_only=True):
 
         """
         return cls.from_str(read_nzb_file(nzb))
-
-    @classmethod
-    def from_json(cls, json: str, /) -> Self:
-        """
-        Deserialize the given JSON string into an [`Nzb`][nzb.Nzb].
-
-        Parameters
-        ----------
-        json : str
-            JSON string representing the NZB.
-
-        Returns
-        -------
-        Self
-            Object representing the parsed NZB file.
-
-        Raises
-        ------
-        InvalidNzbError
-            Raised if the NZB is invalid.
-
-        """
-        return msgspec.json.decode(json, type=cls)
-
-    def to_json(self, *, pretty: bool = False) -> str:
-        """
-        Serialize the [`Nzb`][nzb.Nzb] object into a JSON string.
-
-        Parameters
-        ----------
-        pretty : bool, optional
-            Whether to pretty format the JSON string.
-
-        Returns
-        -------
-        str
-            JSON string representing the NZB.
-
-        """
-        jsonified = msgspec.json.encode(self).decode()
-
-        if pretty:
-            return msgspec.json.format(jsonified)
-
-        return jsonified
 
     @cached_property
     def file(self) -> File:
