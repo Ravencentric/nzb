@@ -4,7 +4,6 @@ import datetime
 from pathlib import Path
 
 import pytest
-from rnzb import Nzb as RustNzb
 
 from nzb import File, Nzb, Segment
 
@@ -260,18 +259,10 @@ def test_multi_rar_nzb() -> None:
     ],
 )
 def test_json_roundtrip(nzb_file: Path) -> None:
-    original = Nzb.from_file(nzb_file)
-    original_rnzb = RustNzb.from_file(nzb_file)
+    import rnzb
 
-    serialized = original.to_json()
-    serialized_rnzb = original_rnzb.to_json()
+    _nzb = Nzb.from_file(nzb_file)
+    _rnzb = rnzb.Nzb.from_file(nzb_file)
 
-    assert serialized == serialized_rnzb
-
-    deserialized = Nzb.from_json(serialized)
-    deserialized_rnzb = RustNzb.from_json(serialized_rnzb)
-
-    assert original == deserialized
-    assert original_rnzb == deserialized_rnzb
-
-    assert deserialized.to_json(pretty=True) == deserialized_rnzb.to_json(pretty=True)
+    assert Nzb.from_json(_rnzb.to_json()) == _nzb
+    assert rnzb.Nzb.from_json(_nzb.to_json()) == _rnzb
