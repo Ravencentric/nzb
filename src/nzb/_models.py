@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING, Any
 
 import msgspec
 
-from nzb._utils import extract_filename_from_subject, name_is_par2, name_is_rar, stem_is_obfuscated
+from nzb._subparsers import extract_filename_from_subject, name_is_par2, name_is_rar, stem_is_obfuscated
 
 if TYPE_CHECKING:
     from typing_extensions import Self
