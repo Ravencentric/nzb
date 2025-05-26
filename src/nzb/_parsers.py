@@ -6,7 +6,7 @@ https://web.archive.org/web/20240709113825/https://sabnzbd.org/wiki/extra/nzb-sp
 from __future__ import annotations
 
 import re
-from typing import Any, TypeAlias, cast
+from typing import Any, Literal, TypeAlias, cast
 
 import msgspec
 from natsort import natsorted
@@ -82,14 +82,17 @@ def parse_metadata(nzb: dict[str, Any]) -> Meta:
     )
 
 
-def parse_segments(segmentdict: dict[str, list[dict[str, str]] | dict[str, str] | None] | None) -> tuple[Segment, ...]:
+def parse_segments(
+    segments: dict[Literal["segment"], list[dict[str, str]] | dict[str, str]] | None,
+) -> tuple[Segment, ...]:
     """
     Parse the `<segments>...</segments>` field present in an NZB.
 
-    There's 3 possible things that we can get here:
-    - A list of dictionaries if there's more than 1 segment field present
-    - A dictionary if there's only one segment field present
-    - None if there's no segment field
+    The `segments` parameter can be:
+    - `None`: If the 'segments' field is entirely absent.
+    - A dictionary with a single key, `segment`. The value associated with this `segment` key can be:
+        - A list of dictionaries, where each dictionary represents a segment.
+        - A single dictionary, representing a single segment.
 
     ```xml
     <?xml version="1.0" encoding="iso-8859-1" ?>
@@ -105,36 +108,39 @@ def parse_segments(segmentdict: dict[str, list[dict[str, str]] | dict[str, str] 
     </nzb>
     ```
     """  # noqa: E501
-    # It's nested or possibly None
-    segments = segmentdict.get("segment") if segmentdict else None
+    errmsg = (
+        "Invalid or missing 'segments' element within the 'file' element. "
+        "Each 'file' element must contain at least one valid 'segments' element."
+    )
 
-    if segments is None:
-        msg = (
-            "Invalid or missing 'segments' element within the 'file' element. "
-            "Each 'file' element must contain at least one valid 'segments' element."
-        )
-        raise InvalidNzbError(msg)
+    if not segments:
+        raise InvalidNzbError(errmsg)
 
-    if isinstance(segments, dict):
-        segments = [segments]
+    try:
+        segment = segments["segment"]
+    except KeyError:
+        raise InvalidNzbError(errmsg) from None
 
-    segmentlist: list[Segment] = []
+    fields = [segment] if isinstance(segment, dict) else segment
+    parsed: list[Segment] = []
 
-    for segment in segments:
+    for field in fields:
         try:
-            size = int(segment["@bytes"])
-            number = int(segment["@number"])
-            message_id = segment["#text"]
+            size = int(field["@bytes"])
+            number = int(field["@number"])
+            message_id = field["#text"]
+            parsed.append(Segment(size=size, number=number, message_id=message_id))
         except (KeyError, ValueError):
-            # This segment is broken
+            # This segment is broken.
             # We do not error here because a few missing
             # segments don't invalidate the nzb.
             continue
 
-        segmentlist.append(Segment(size=size, number=number, message_id=message_id))
+    if not parsed:
+        raise InvalidNzbError(errmsg)
 
-    segmentlist.sort(key=lambda seg: seg.number)
-    return tuple(segmentlist)
+    parsed.sort(key=lambda x: x.number)
+    return tuple(parsed)
 
 
 def parse_files(nzb: dict[str, Any]) -> tuple[File, ...]:

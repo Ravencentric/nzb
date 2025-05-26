@@ -69,7 +69,6 @@ extend-select = [
   "W",    # https://docs.astral.sh/ruff/rules/#pycodestyle-e-w
   "FURB", # https://docs.astral.sh/ruff/rules/#refurb-furb
   "TC",   # https://docs.astral.sh/ruff/rules/#flake8-type-checking-tc
-  "PERF", # https://docs.astral.sh/ruff/rules/#perflint-perf
 ]
 fixable = ["ALL"]
 

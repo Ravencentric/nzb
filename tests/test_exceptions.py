@@ -2,10 +2,12 @@ from __future__ import annotations
 
 import textwrap
 from pathlib import Path
+from typing import Literal
 
 import pytest
 
 from nzb import InvalidNzbError, Nzb, NzbMetaEditor
+from nzb._parsers import parse_segments
 from nzb._utils import read_nzb_file
 
 NZB_DIR = Path(__file__).parent.resolve() / "__nzbs__"
@@ -202,3 +204,15 @@ def test_nzb_with_missing_file_subject() -> None:
 def test_non_existent_file() -> None:
     with pytest.raises(FileNotFoundError, match="blahblah"):
         Nzb.from_file("blahblah")
+
+
+@pytest.mark.parametrize("segments", ({"blah": "blah"}, None, {"segment": []}))
+def test_parse_segements(segments: dict[Literal["segment"], list[dict[str, str]] | dict[str, str]] | None) -> None:
+    with pytest.raises(
+        InvalidNzbError,
+        match=(
+            "Invalid or missing 'segments' element within the 'file' element. "
+            "Each 'file' element must contain at least one valid 'segments' element."
+        ),
+    ):
+        parse_segments(segments)
