@@ -264,5 +264,8 @@ def test_json_roundtrip(nzb_file: Path) -> None:
     _nzb = Nzb.from_file(nzb_file)
     _rnzb = rnzb.Nzb.from_file(nzb_file)
 
+    # Test round-trip: rnzb.Nzb -> JSON -> nzb.Nzb
     assert Nzb.from_json(_rnzb.to_json()) == _nzb
-    assert rnzb.Nzb.from_json(_nzb.to_json()) == _rnzb
+
+    # Test round-trip: nzb.Nzb -> JSON -> rnzb.Nzb
+    assert rnzb.Nzb.from_json(_nzb.to_json(pretty=True)) == _rnzb

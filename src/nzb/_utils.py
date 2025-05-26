@@ -42,11 +42,13 @@ def read_nzb_file(path: StrPath, /) -> str:
                 with gzip.open(file) as f:
                     data = f.read().decode(encoding=encoding, errors=errors).strip()
             except gzip.BadGzipFile as e:
-                raise InvalidNzbError(f"Gzip decompression error for file '{file}': {e}") from None
+                msg = f"Gzip decompression error for file '{file}': {e}"
+                raise InvalidNzbError(msg) from None
         else:
             data = file.read_text(encoding=encoding, errors=errors)
     except (OSError, UnicodeError) as e:
-        raise InvalidNzbError(f"I/O error while reading file '{file}': {e}") from None
+        msg = f"I/O error while reading file '{file}': {e}"
+        raise InvalidNzbError(msg) from None
 
     return data
 
@@ -59,7 +61,8 @@ def nzb_to_dict(nzb: str) -> dict[str, Any]:
     try:
         return xmltodict.parse(nzb.strip())
     except ExpatError as e:
-        raise InvalidNzbError(f"The NZB document is not valid XML and could not be parsed: {e.args[0]}") from None
+        msg = f"The NZB document is not valid XML and could not be parsed: {e.args[0]}"
+        raise InvalidNzbError(msg) from None
 
 
 def construct_meta(
@@ -81,15 +84,13 @@ def construct_meta(
         if isinstance(passwords, str):
             meta.append({"@type": "password", "#text": passwords})
         else:
-            for password in passwords:
-                meta.append({"@type": "password", "#text": password})  # noqa: PERF401
+            meta.extend({"@type": "password", "#text": password} for password in passwords)
 
     if tags:
         if isinstance(tags, str):
             meta.append({"@type": "tag", "#text": tags})
         else:
-            for tag in tags:
-                meta.append({"@type": "tag", "#text": tag})  # noqa: PERF401
+            meta.extend({"@type": "tag", "#text": tag} for tag in tags)
 
     if category:
         meta.append({"@type": "category", "#text": category})

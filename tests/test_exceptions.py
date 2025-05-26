@@ -61,23 +61,6 @@ def test_invalid_nzb_error() -> None:
         assert str(error) == message
         assert repr(error) == 'InvalidNzbError("Missing something in the NZB")'
 
-    assert InvalidNzbError._from_preset("groups").message == (
-        "Invalid or missing 'groups' element within the 'file' element. "
-        + "Each 'file' element must contain at least one valid 'groups' element."
-    )
-    assert InvalidNzbError._from_preset("segments").message == (
-        "Invalid or missing 'segments' element within the 'file' element. "
-        + "Each 'file' element must contain at least one valid 'segments' element."
-    )
-    assert InvalidNzbError._from_preset("file").message == (
-        "Invalid or missing 'file' element in the NZB document. "
-        + "The NZB document must contain at least one valid 'file' element, "
-        + "and each 'file' must have at least one valid 'groups' and 'segments' element."
-    )
-
-    with pytest.raises(ValueError):
-        InvalidNzbError._from_preset("files")  # type: ignore[arg-type]
-
 
 def test_saving_overwrite() -> None:
     with pytest.raises(FileExistsError):

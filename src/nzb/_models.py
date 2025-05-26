@@ -76,9 +76,8 @@ class File(Base, frozen=True, kw_only=True):
         """
         if not self.name:
             return None
-        else:
-            root, _ = splitext(self.name)
-            return root
+        root, _ = splitext(self.name)
+        return root
 
     @property
     def extension(self) -> str | None:
@@ -88,9 +87,8 @@ class File(Base, frozen=True, kw_only=True):
         """
         if not self.name:
             return None
-        else:
-            _, ext = splitext(self.name)
-            return ext.removeprefix(".")
+        _, ext = splitext(self.name)
+        return ext.removeprefix(".")
 
     def has_extension(self, ext: str, /) -> bool:
         """

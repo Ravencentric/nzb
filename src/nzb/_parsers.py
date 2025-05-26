@@ -43,7 +43,7 @@ def parse_metadata(nzb: dict[str, Any]) -> Meta:
     MetaFieldType: TypeAlias = list[dict[str, str]] | dict[str, str] | None
 
     # Explicit cast to tell typecheckers the return type based on the above 3 points.
-    meta = cast(MetaFieldType, meta)
+    meta = cast("MetaFieldType", meta)
 
     if meta is None:
         # Meta is optional, so we will not error
@@ -111,12 +111,16 @@ def parse_segments(segmentdict: dict[str, list[dict[str, str]] | dict[str, str] 
         </file>
     </nzb>
     ```
-    """
+    """  # noqa: E501
     # It's nested or possibly None
     segments = segmentdict.get("segment") if segmentdict else None
 
     if segments is None:
-        raise InvalidNzbError._from_preset("segments")
+        msg = (
+            "Invalid or missing 'segments' element within the 'file' element. "
+            "Each 'file' element must contain at least one valid 'segments' element."
+        )
+        raise InvalidNzbError(msg)
 
     if isinstance(segments, dict):
         segments = [segments]
@@ -154,7 +158,7 @@ def parse_files(nzb: dict[str, Any]) -> tuple[File, ...]:
         </file>
     </nzb>
     ```
-    """
+    """  # noqa: E501
 
     files = nzb.get("nzb", {}).get("file")
     # There's 3 possible things that we can get from the above here:
@@ -166,10 +170,15 @@ def parse_files(nzb: dict[str, Any]) -> tuple[File, ...]:
     FileFieldType: TypeAlias = list[dict[str, str]] | dict[str, str] | None
 
     # Explicit cast to tell typecheckers the return type based on the above 3 points.
-    files = cast(FileFieldType, files)
+    files = cast("FileFieldType", files)
 
     if files is None:
-        raise InvalidNzbError._from_preset("file")
+        msg = (
+            "Invalid or missing 'file' element in the NZB document. "
+            "The NZB document must contain at least one valid 'file' element, "
+            "and each 'file' must have at least one valid 'groups' and 'segments' element."
+        )
+        raise InvalidNzbError(msg)
 
     if isinstance(files, dict):
         files = [files]
@@ -189,10 +198,14 @@ def parse_files(nzb: dict[str, Any]) -> tuple[File, ...]:
         GroupFieldType: TypeAlias = list[str] | str | None
 
         # Explicit cast to tell typecheckers the return type based on the above 3 points.
-        groups = cast(GroupFieldType, groups)
+        groups = cast("GroupFieldType", groups)
 
         if groups is None:
-            raise InvalidNzbError._from_preset("groups")
+            msg = (
+                "Invalid or missing 'groups' element within the 'file' element. "
+                "Each 'file' element must contain at least one valid 'groups' element."
+            )
+            raise InvalidNzbError(msg)
 
         if isinstance(groups, str):
             grouplist.append(groups)
@@ -211,24 +224,27 @@ def parse_files(nzb: dict[str, Any]) -> tuple[File, ...]:
                 type=File,
                 strict=False,
             )
-        except msgspec.ValidationError as e:
+        except msgspec.ValidationError as err:
             # There seems to be no way to get the invalid field,
             # other than just regexing it out of the error message.
-            if match := re.search(r"\$\.(poster|posted_at|subject)", str(e)):
+            errmsg = str(err)
+            if match := re.search(r"\$\.(poster|posted_at|subject)", errmsg):
                 attr = match.group(1)
                 if attr == "posted_at":
                     attr = "date"
-                raise InvalidNzbError(f"Invalid or missing required attribute '{attr}' in a 'file' element.") from None
-            else:  # pragma: no cover
-                # This should never happen
-                raise InvalidNzbError(str(e)) from None
+                msg = f"Invalid or missing required attribute '{attr}' in a 'file' element."
+                raise InvalidNzbError(msg) from None
+            raise InvalidNzbError(errmsg) from None  # pragma: no cover; Should be impossible to reach this.
 
         filelist.append(_file)
 
-    if not filelist:  # pragma: no cover
-        # I cannot think of any case where this will ever be raised
-        # but just in case
-        raise InvalidNzbError._from_preset("file")
+    if not filelist:  # pragma: no cover; Should be impossible to reach this.
+        msg = (
+            "Invalid or missing 'file' element in the NZB document. "
+            "The NZB document must contain at least one valid 'file' element, "
+            "and each 'file' must have at least one valid 'groups' and 'segments' element."
+        )
+        raise InvalidNzbError(msg)
 
     return tuple(natsorted(filelist, key=lambda file: file.subject))
 
@@ -238,8 +254,11 @@ def parse_doctype(nzb: str) -> str | None:
     Parse the DOCTYPE from an NZB file.
 
     Quoting https://www.oreilly.com/library/view/xml-pocket-reference/9780596100506/ch01s02s09.html:
-    "A document type or DOCTYPE declaration provides information to a validating XML parser about how to validate an XML document.
-    The DOCTYPE keyword appears first; then the document, or root, element of the document being validated is identified,
+
+    "A document type or DOCTYPE declaration provides information
+    to a validating XML parser about how to validate an XML document.
+    The DOCTYPE keyword appears first; then the document, or root,
+    element of the document being validated is identified,
     followed by either a SYSTEM or PUBLIC identifier."
 
     Example:

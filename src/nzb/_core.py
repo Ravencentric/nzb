@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from collections import OrderedDict
 from functools import cached_property
-from pathlib import Path
 from typing import TYPE_CHECKING, Literal, overload
 
 import msgspec
@@ -15,6 +14,7 @@ from nzb._utils import construct_meta, nzb_to_dict, read_nzb_file, realpath, rem
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
+    from pathlib import Path
 
     from _typeshed import StrPath
     from typing_extensions import Self
@@ -58,7 +58,7 @@ class Nzb(Base, frozen=True, kw_only=True, dict=True):
     print(f"Total size in bytes: {nzb.size}")
     ```
 
-    """
+    """  # noqa: E501
 
     meta: Meta = Meta()
     """Optional creator-definable metadata for the contents of the NZB."""
@@ -320,7 +320,7 @@ class NzbMetaEditor:
         print(edited)
         ```
 
-        """
+        """  # noqa: E501
         self._nzb = nzb
         self._nzbdict = nzb_to_dict(self._nzb)
 
@@ -478,15 +478,13 @@ class NzbMetaEditor:
         if meta is None:
             return self
 
-        elif isinstance(meta, dict):
+        if isinstance(meta, dict):
             if key == meta["@type"]:
                 return self.clear()
-            else:
-                return self
-        else:
-            new_meta = [row for row in meta if row["@type"] != key]
-            self._nzbdict["nzb"]["head"]["meta"] = sort_meta(new_meta)
             return self
+        new_meta = [row for row in meta if row["@type"] != key]
+        self._nzbdict["nzb"]["head"]["meta"] = sort_meta(new_meta)
+        return self
 
     def clear(self) -> Self:
         """
