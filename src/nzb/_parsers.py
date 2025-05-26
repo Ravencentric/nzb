@@ -32,54 +32,47 @@ def parse_metadata(nzb: dict[str, Any]) -> Meta:
     </nzb>
     ```
     """
-
-    meta = nzb.get("nzb", {}).get("head", {}).get("meta")
-    # There's 3 possible things that we can get from the above here:
-    # - A list of dictionaries if there's more than 1 meta field present
-    # - A dictionary if there's only one meta field present
-    # - None if there's no meta field
-
-    # Here's the type representation of the three possible cases that we need to handle
-    MetaFieldType: TypeAlias = list[dict[str, str]] | dict[str, str] | None
-
-    # Explicit cast to tell typecheckers the return type based on the above 3 points.
-    meta = cast("MetaFieldType", meta)
-
-    if meta is None:
-        # Meta is optional, so we will not error
-        # just return an instance with all values set to None
+    try:
+        # Assuming 'meta' exists, there are 2 possible types we can get for 'meta':
+        # - A list of dictionaries if multiple meta fields are present.
+        # - A dictionary if only one meta field is present.
+        meta: list[dict[str, str]] | dict[str, str] = nzb["nzb"]["head"]["meta"]
+    except KeyError:
         return Meta()
 
-    if isinstance(meta, dict):
-        meta = [meta]
+    fields = [meta] if isinstance(meta, dict) else meta
 
     passwords: list[str] = []
     tags: list[str] = []
     title = None
     category = None
 
-    for item in meta:
-        if item.get("@type", "").casefold() == "title":
-            title = item.get("#text")
+    for field in fields:
+        match field.get("@type", "").casefold().strip():
+            case "title":
+                title = field.get("#text")
 
-        if item.get("@type", "").casefold() == "password":
-            # spec allows for multiple passwords by repeating the same field
-            # <meta type="password">secret1</meta>
-            # <meta type="password">secret2</meta>
-            # <meta type="password">secret3</meta>
-            if password := item.get("#text"):
-                passwords.append(password)
+            case "password":
+                # spec allows for multiple passwords by repeating the same field
+                # <meta type="password">secret1</meta>
+                # <meta type="password">secret2</meta>
+                # <meta type="password">secret3</meta>
+                if password := field.get("#text"):
+                    passwords.append(password)
 
-        if item.get("@type", "").casefold() == "tag":
-            # spec allows for multiple tags by repeating the same field
-            # <meta type="tag">HD</meta>
-            # <meta type="tag">Anime</meta>
-            # <meta type="tag">1080p</meta>
-            if tag := item.get("#text"):
-                tags.append(tag.strip())
+            case "tag":
+                # spec allows for multiple tags by repeating the same field
+                # <meta type="tag">HD</meta>
+                # <meta type="tag">Anime</meta>
+                # <meta type="tag">1080p</meta>
+                if tag := field.get("#text"):
+                    tags.append(tag.strip())
 
-        if item.get("@type", "").casefold() == "category":
-            category = item.get("#text")
+            case "category":
+                category = field.get("#text")
+            case _:
+                # Ignore unknown fields.
+                pass
 
     return Meta(
         title=title,
