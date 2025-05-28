@@ -6,9 +6,9 @@ https://web.archive.org/web/20240709113825/https://sabnzbd.org/wiki/extra/nzb-sp
 from __future__ import annotations
 
 import re
-from typing import Any, Literal, TypeAlias, cast
+from datetime import datetime, timezone
+from typing import Any, Literal
 
-import msgspec
 from natsort import natsorted
 
 from nzb._exceptions import InvalidNzbError
@@ -118,10 +118,17 @@ def parse_segments(
 
     try:
         segment = segments["segment"]
-    except KeyError:
+    except (KeyError, TypeError):
         raise InvalidNzbError(errmsg) from None
 
-    fields = [segment] if isinstance(segment, dict) else segment
+    match segment:
+        case dict() if segment:
+            fields = [segment]
+        case list() if segment:
+            fields = segment
+        case _:
+            raise InvalidNzbError(errmsg)
+
     parsed: list[Segment] = []
 
     for field in fields:
@@ -136,11 +143,47 @@ def parse_segments(
             # segments don't invalidate the nzb.
             continue
 
-    if not parsed:
-        raise InvalidNzbError(errmsg)
-
     parsed.sort(key=lambda x: x.number)
     return tuple(parsed)
+
+
+def parse_groups(groups: dict[Literal["group"], list[str] | str] | None) -> tuple[str, ...]:
+    """
+    Parse the `<groups>...</groups>` field present in each `<file>...</file>`.
+
+    The `groups` parameter can be:
+    - `None`: If the 'group' field is empty.
+    - A dictionary with a single key, `group`. The value associated with this `group` key can be:
+        - A list of strings, where each string represents a group.
+        - A single string, representing a single group.
+
+    ```xml
+    <groups>
+        <group>alt.binaries.newzbin</group>
+        <group>alt.binaries.mojo</group>
+    </groups>
+    ```
+    """
+    errmsg = (
+        "Invalid or missing 'groups' element within the 'file' element. "
+        "Each 'file' element must contain at least one valid 'groups' element."
+    )
+
+    if not groups:
+        raise InvalidNzbError(errmsg)
+
+    try:
+        group = groups["group"]
+    except (KeyError, TypeError):
+        raise InvalidNzbError(errmsg) from None
+
+    match group:
+        case str() if group:
+            return (group,)
+        case list() if group:
+            return tuple(natsorted(group))
+        case _:
+            raise InvalidNzbError(errmsg)
 
 
 def parse_files(nzb: dict[str, Any]) -> tuple[File, ...]:
@@ -158,94 +201,60 @@ def parse_files(nzb: dict[str, Any]) -> tuple[File, ...]:
     </nzb>
     ```
     """  # noqa: E501
+    errmsg = (
+        "Invalid or missing 'file' element in the NZB document. "
+        "The NZB document must contain at least one valid 'file' element, "
+        "and each 'file' must have at least one valid 'groups' and 'segments' element."
+    )
 
-    files = nzb.get("nzb", {}).get("file")
-    # There's 3 possible things that we can get from the above here:
-    # - A list of dictionaries if there's more than 1 file field present, i.e, list[dict[str, str]]
-    # - A dictionary if there's only one file field present, i.e, dict[str, str]
-    # - None if there's no file field
+    try:
+        # There are 2 possible types we can get here:
+        # - A list of dictionaries if multiple file fields are present.
+        # - A dictionary if only one file field is present.
+        files: list[dict[str, Any]] | dict[str, Any] = nzb["nzb"]["file"]
+    except (KeyError, TypeError):
+        raise InvalidNzbError(errmsg) from None
 
-    # Here's the type representation of the three possible cases that we need to handle
-    FileFieldType: TypeAlias = list[dict[str, str]] | dict[str, str] | None
+    match files:
+        case dict() if files:
+            fields = [files]
+        case list() if files:
+            fields = files
+        case _:
+            raise InvalidNzbError(errmsg)
 
-    # Explicit cast to tell typecheckers the return type based on the above 3 points.
-    files = cast("FileFieldType", files)
+    parsed: list[File] = []
 
-    if files is None:
-        msg = (
-            "Invalid or missing 'file' element in the NZB document. "
-            "The NZB document must contain at least one valid 'file' element, "
-            "and each 'file' must have at least one valid 'groups' and 'segments' element."
-        )
-        raise InvalidNzbError(msg)
-
-    if isinstance(files, dict):
-        files = [files]
-
-    filelist: list[File] = []
-
-    for file in files:
-        grouplist: list[str] = []
-
-        groups = file.get("groups").get("group") if file.get("groups") else None
-        # There's 3 possible things that we can get from the above here:
-        # - A list of strings if there's more than 1 group present, i.e, list[str]
-        # - A string if there's only one file field present, i.e, str
-        # - None if there's no group field
-
-        # Here's the type representation of the three possible cases that we need to handle
-        GroupFieldType: TypeAlias = list[str] | str | None
-
-        # Explicit cast to tell typecheckers the return type based on the above 3 points.
-        groups = cast("GroupFieldType", groups)
-
-        if groups is None:
-            msg = (
-                "Invalid or missing 'groups' element within the 'file' element. "
-                "Each 'file' element must contain at least one valid 'groups' element."
-            )
-            raise InvalidNzbError(msg)
-
-        if isinstance(groups, str):
-            grouplist.append(groups)
-        else:
-            grouplist.extend(groups)
-
+    for field in fields:
         try:
-            _file = msgspec.convert(
-                {
-                    "poster": file.get("@poster"),  # Can fail
-                    "posted_at": file.get("@date"),  # Can fail
-                    "subject": file.get("@subject"),  # Can fail
-                    "groups": natsorted(grouplist),  # Can't fail, pre-validated
-                    "segments": parse_segments(file.get("segments")),  # Can't fail, pre-validated
-                },
-                type=File,
-                strict=False,
-            )
-        except msgspec.ValidationError as err:
-            # There seems to be no way to get the invalid field,
-            # other than just regexing it out of the error message.
-            errmsg = str(err)
-            if match := re.search(r"\$\.(poster|posted_at|subject)", errmsg):
-                attr = match.group(1)
-                if attr == "posted_at":
-                    attr = "date"
-                msg = f"Invalid or missing required attribute '{attr}' in a 'file' element."
+            poster = field["@poster"]
+            date = field["@date"]
+
+            try:
+                posted_at = datetime.fromtimestamp(int(date), tz=timezone.utc)
+            except ValueError:
+                msg = "Invalid or missing required attribute 'date' in a 'file' element."
                 raise InvalidNzbError(msg) from None
-            raise InvalidNzbError(errmsg) from None  # pragma: no cover; Should be impossible to reach this.
 
-        filelist.append(_file)
+            subject = field["@subject"]
+            groups = parse_groups(field.get("groups"))
+            segments = parse_segments(field.get("segments"))
 
-    if not filelist:  # pragma: no cover; Should be impossible to reach this.
-        msg = (
-            "Invalid or missing 'file' element in the NZB document. "
-            "The NZB document must contain at least one valid 'file' element, "
-            "and each 'file' must have at least one valid 'groups' and 'segments' element."
-        )
-        raise InvalidNzbError(msg)
+            parsed.append(
+                File(
+                    poster=poster,
+                    posted_at=posted_at,
+                    subject=subject,
+                    groups=groups,
+                    segments=segments,
+                )
+            )
+        except KeyError as key:
+            attr = str(key).replace("@", "")
+            msg = f"Invalid or missing required attribute {attr} in a 'file' element."
+            raise InvalidNzbError(msg) from None
 
-    return tuple(natsorted(filelist, key=lambda file: file.subject))
+    return tuple(natsorted(parsed, key=lambda file: file.subject))
 
 
 def parse_doctype(nzb: str) -> str | None:

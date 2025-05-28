@@ -2,12 +2,12 @@ from __future__ import annotations
 
 import textwrap
 from pathlib import Path
-from typing import Literal
+from typing import Any, Literal
 
 import pytest
 
 from nzb import InvalidNzbError, Nzb, NzbMetaEditor
-from nzb._parsers import parse_segments
+from nzb._parsers import parse_files, parse_groups, parse_segments
 from nzb._utils import read_nzb_file
 
 NZB_DIR = Path(__file__).parent.resolve() / "__nzbs__"
@@ -210,9 +210,24 @@ def test_non_existent_file() -> None:
 def test_parse_segements(segments: dict[Literal["segment"], list[dict[str, str]] | dict[str, str]] | None) -> None:
     with pytest.raises(
         InvalidNzbError,
-        match=(
-            "Invalid or missing 'segments' element within the 'file' element. "
-            "Each 'file' element must contain at least one valid 'segments' element."
-        ),
+        match=INVALID_NZB_ERROR_SEGMENTS_ELEMENT,
     ):
         parse_segments(segments)
+
+
+@pytest.mark.parametrize("groups", ({"blah": "blah"}, None, {"group": []}))
+def test_parse_groups(groups: dict[Literal["group"], list[str] | str] | None) -> None:
+    with pytest.raises(
+        InvalidNzbError,
+        match=INVALID_NZB_ERROR_GROUPS_ELEMENT,
+    ):
+        parse_groups(groups)
+
+
+@pytest.mark.parametrize("nzb", ({"nzb": {"file": []}}, None))
+def test_parse_files(nzb: dict[str, Any]) -> None:
+    with pytest.raises(
+        InvalidNzbError,
+        match=INVALID_NZB_ERROR_FILE_ELEMENT,
+    ):
+        parse_files(nzb)
