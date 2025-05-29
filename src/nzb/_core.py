@@ -158,7 +158,7 @@ class Nzb:
                     for segment in file["segments"]
                 )
                 groups = tuple(file["groups"])
-                posted_at = datetime.fromisoformat(file["posted_at"])
+                posted_at = datetime.strptime(file["posted_at"], "%Y-%m-%dT%H:%M:%S%z")
 
                 files.append(
                     File(
@@ -196,7 +196,7 @@ class Nzb:
 
         def default(obj: Any) -> Any:
             if isinstance(obj, datetime):
-                return obj.isoformat()
+                return obj.strftime("%Y-%m-%dT%H:%M:%SZ")
             msg = f"Object of type {type(obj).__name__} is not JSON serializable"  # pragma: no cover
             raise TypeError(msg)  # pragma: no cover
 
