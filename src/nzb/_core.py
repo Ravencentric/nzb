@@ -1,14 +1,18 @@
 from __future__ import annotations
 
+import dataclasses
+import json
 from collections import OrderedDict
+from dataclasses import dataclass, field
+from datetime import datetime
 from functools import cached_property
-from typing import TYPE_CHECKING, Literal, overload
+from typing import TYPE_CHECKING, Any, Literal, overload
 
-import msgspec
 import xmltodict
 from natsort import natsorted
 
-from nzb._models import Base, File, Meta
+from nzb._exceptions import InvalidNzbError
+from nzb._models import File, Meta, Segment
 from nzb._parsers import parse_doctype, parse_files, parse_metadata
 from nzb._utils import construct_meta, nzb_to_dict, read_nzb_file, realpath, remove_meta_fields, sort_meta
 
@@ -20,7 +24,8 @@ if TYPE_CHECKING:
     from typing_extensions import Self
 
 
-class Nzb(Base, frozen=True, kw_only=True, dict=True):
+@dataclass(frozen=True, kw_only=True)
+class Nzb:
     """
     Represents a complete NZB file.
 
@@ -60,7 +65,7 @@ class Nzb(Base, frozen=True, kw_only=True, dict=True):
 
     """  # noqa: E501
 
-    meta: Meta = Meta()
+    meta: Meta = field(default_factory=Meta)
     """Optional creator-definable metadata for the contents of the NZB."""
 
     files: tuple[File, ...]
@@ -136,7 +141,42 @@ class Nzb(Base, frozen=True, kw_only=True, dict=True):
             An instance of this class.
 
         """
-        return msgspec.json.decode(data, type=cls)
+        dejson = json.loads(data)
+
+        try:
+            meta = Meta(
+                title=dejson["meta"]["title"],
+                passwords=tuple(dejson["meta"]["passwords"]),
+                tags=tuple(dejson["meta"]["tags"]),
+                category=dejson["meta"]["category"],
+            )
+            files: list[File] = []
+
+            for file in dejson["files"]:
+                segments = tuple(
+                    Segment(size=segment["size"], number=segment["number"], message_id=segment["message_id"])
+                    for segment in file["segments"]
+                )
+                groups = tuple(file["groups"])
+                posted_at = datetime.fromisoformat(file["posted_at"])
+
+                files.append(
+                    File(
+                        poster=file["poster"],
+                        posted_at=posted_at,
+                        subject=file["subject"],
+                        groups=groups,
+                        segments=segments,
+                    )
+                )
+        except (KeyError, TypeError, ValueError):
+            msg = (
+                f"The provided JSON data is not in the expected format or contains invalid values. "
+                f"This method only works with JSON produced by `{cls.__name__}.to_json()`."
+            )
+            raise InvalidNzbError(msg) from None
+
+        return cls(meta=meta, files=tuple(files))
 
     def to_json(self, *, pretty: bool = False) -> str:
         """
@@ -153,12 +193,15 @@ class Nzb(Base, frozen=True, kw_only=True, dict=True):
             JSON string representing this class.
 
         """
-        jsonified = msgspec.json.encode(self).decode()
 
-        if pretty:
-            return msgspec.json.format(jsonified)
+        def default(obj: Any) -> Any:
+            if isinstance(obj, datetime):
+                return obj.isoformat()
+            msg = f"Object of type {type(obj).__name__} is not JSON serializable"  # pragma: no cover
+            raise TypeError(msg)  # pragma: no cover
 
-        return jsonified
+        indent = 2 if pretty else None
+        return json.dumps(dataclasses.asdict(self), indent=indent, default=default)
 
     @cached_property
     def file(self) -> File:

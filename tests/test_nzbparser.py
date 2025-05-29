@@ -259,6 +259,23 @@ def test_multi_rar_nzb() -> None:
     ],
 )
 def test_json_roundtrip(nzb_file: Path) -> None:
+    nzb = Nzb.from_file(nzb_file)
+    assert Nzb.from_json(nzb.to_json()) == nzb
+
+
+@pytest.mark.parametrize(
+    "nzb_file",
+    [
+        NZB_DIR / "spec_example.nzb",
+        NZB_DIR / "big_buck_bunny.nzb",
+        NZB_DIR / "valid_nzb_with_bad_segments.nzb",
+        NZB_DIR / "bad_subject.nzb",
+        NZB_DIR / "non_standard_meta.nzb",
+        NZB_DIR / "one_rar_file.nzb",
+        NZB_DIR / "multi_rar.nzb",
+    ],
+)
+def test_json_roundtrip_against_rnzb(nzb_file: Path) -> None:
     import rnzb
 
     _nzb = Nzb.from_file(nzb_file)

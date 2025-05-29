@@ -1,23 +1,17 @@
 from __future__ import annotations
 
-from datetime import datetime
+from dataclasses import dataclass
 from os.path import splitext
-
-import msgspec
+from typing import TYPE_CHECKING
 
 from nzb._subparsers import extract_filename_from_subject, name_is_par2, name_is_rar, stem_is_obfuscated
 
-
-class Base(
-    msgspec.Struct,
-    forbid_unknown_fields=True,
-    frozen=True,
-    kw_only=True,
-):
-    """Base class for NZB data structures."""
+if TYPE_CHECKING:
+    from datetime import datetime
 
 
-class Meta(Base, frozen=True, kw_only=True):
+@dataclass(frozen=True, kw_only=True, slots=True)
+class Meta:
     """Optional creator-definable metadata for the contents of the NZB."""
 
     title: str | None = None
@@ -30,7 +24,8 @@ class Meta(Base, frozen=True, kw_only=True):
     """Category."""
 
 
-class Segment(Base, frozen=True, kw_only=True):
+@dataclass(frozen=True, kw_only=True, slots=True)
+class Segment:
     """One part segment of a file."""
 
     size: int
@@ -41,7 +36,8 @@ class Segment(Base, frozen=True, kw_only=True):
     """Message ID of the segment."""
 
 
-class File(Base, frozen=True, kw_only=True):
+@dataclass(frozen=True, kw_only=True, slots=True)
+class File:
     """Represents a complete file, consisting of segments that make up a file."""
 
     poster: str

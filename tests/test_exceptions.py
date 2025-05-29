@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import json
+import re
 import textwrap
 from pathlib import Path
 from typing import Any, Literal
@@ -231,3 +233,38 @@ def test_parse_files(nzb: dict[str, Any]) -> None:
         match=INVALID_NZB_ERROR_FILE_ELEMENT,
     ):
         parse_files(nzb)
+
+
+def test_nzb_from_json() -> None:
+    data = json.dumps(
+        {
+            "meta": {"title": "Big Buck Bunny - S01E01.mkv", "passwords": ["secret"], "tags": ["HD"], "category": "TV"},
+            "files": [
+                {
+                    "poster": "John <nzb@nowhere.example>",
+                    "posted_at": "2024-01-28T11:18:28Z",
+                    "subject": '[1/1] - "Big Buck Bunny - S01E01.mkv" yEnc (1/2) 1478616',
+                    "groups": ["alt.binaries.boneless"],
+                    "segments": [
+                        {
+                            "size": 739067,
+                            "message_id": "9cacde4c986547369becbf97003fb2c5-9483514693959@example",
+                        },
+                        {
+                            "size": 739549,
+                            "number": 2,
+                            "message_id": "70a3a038ce324e618e2751e063d6a036-7285710986748@example",
+                        },
+                    ],
+                }
+            ],
+        }
+    )
+    with pytest.raises(
+        InvalidNzbError,
+        match=re.escape(
+            "The provided JSON data is not in the expected format or contains invalid values. "
+            "This method only works with JSON produced by `Nzb.to_json()`."
+        ),
+    ):
+        Nzb.from_json(data)
