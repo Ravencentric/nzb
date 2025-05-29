@@ -15,7 +15,7 @@ classifiers = [
   "Programming Language :: Python :: 3.13",
   "Typing :: Typed",
 ]
-dependencies = ["natsort>=8.4.0", "xmltodict>=0.14.2"]
+dependencies = ["xmltodict>=0.14.2"]
 
 [project.urls]
 Homepage = "https://nzb.ravencentric.cc"

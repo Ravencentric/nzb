@@ -9,7 +9,6 @@ from functools import cached_property
 from typing import TYPE_CHECKING, Any, Literal, overload
 
 import xmltodict
-from natsort import natsorted
 
 from nzb._exceptions import InvalidNzbError
 from nzb._models import File, Meta, Segment
@@ -223,14 +222,14 @@ class Nzb:
         Tuple of unique file names across all the files in the NZB.
         May return an empty tuple if it fails to extract the name for every file.
         """
-        return tuple(natsorted({file.name for file in self.files if file.name is not None}))
+        return tuple(sorted({file.name for file in self.files if file.name is not None}))
 
     @cached_property
     def posters(self) -> tuple[str, ...]:
         """
         Tuple of unique posters across all the files in the NZB.
         """
-        return tuple(natsorted({file.poster for file in self.files}))
+        return tuple(sorted({file.poster for file in self.files}))
 
     @cached_property
     def groups(self) -> tuple[str, ...]:
@@ -242,14 +241,14 @@ class Nzb:
         for file in self.files:
             groupset.update(file.groups)
 
-        return tuple(natsorted(groupset))
+        return tuple(sorted(groupset))
 
     @cached_property
     def par2_files(self) -> tuple[File, ...]:
         """
         Tuple of par2 files in the NZB.
         """
-        return tuple(natsorted((file for file in self.files if file.is_par2()), key=lambda f: f.subject))
+        return tuple(sorted((file for file in self.files if file.is_par2()), key=lambda f: f.subject))
 
     @cached_property
     def par2_size(self) -> int:

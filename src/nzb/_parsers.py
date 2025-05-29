@@ -9,8 +9,6 @@ import re
 from datetime import datetime, timezone
 from typing import Any, Literal
 
-from natsort import natsorted
-
 from nzb._exceptions import InvalidNzbError
 from nzb._models import File, Meta, Segment
 
@@ -181,7 +179,7 @@ def parse_groups(groups: dict[Literal["group"], list[str] | str] | None) -> tupl
         case str() if group:
             return (group,)
         case list() if group:
-            return tuple(natsorted(group))
+            return tuple(sorted(group))
         case _:
             raise InvalidNzbError(errmsg)
 
@@ -254,7 +252,7 @@ def parse_files(nzb: dict[str, Any]) -> tuple[File, ...]:
             msg = f"Invalid or missing required attribute {attr} in a 'file' element."
             raise InvalidNzbError(msg) from None
 
-    return tuple(natsorted(parsed, key=lambda file: file.subject))
+    return tuple(sorted(parsed, key=lambda file: file.subject))
 
 
 def parse_doctype(nzb: str) -> str | None:
