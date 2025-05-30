@@ -39,7 +39,7 @@ def parse_metadata(nzb: ElementTree.Element) -> Meta:
     category = None
 
     for meta in nzb.findall("./head/meta"):
-        match meta.attrib["type"].lower():
+        match meta.get("type", "").lower():
             case "title":
                 title = meta.text
 
