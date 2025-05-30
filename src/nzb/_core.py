@@ -13,6 +13,7 @@ import xmltodict
 from nzb._exceptions import InvalidNzbError
 from nzb._models import File, Meta, Segment
 from nzb._parsers import parse_doctype, parse_files, parse_metadata
+from nzb._subparsers import nzb_to_tree
 from nzb._utils import construct_meta, nzb_to_dict, read_nzb_file, realpath, remove_meta_fields, sort_meta
 
 if TYPE_CHECKING:
@@ -91,9 +92,9 @@ class Nzb:
             Raised if the NZB is invalid.
 
         """
-        nzbdict = nzb_to_dict(nzb)
-        meta = parse_metadata(nzbdict)
-        files = parse_files(nzbdict)
+        tree = nzb_to_tree(nzb)
+        meta = parse_metadata(tree)
+        files = parse_files(tree)
 
         return cls(meta=meta, files=files)
 
