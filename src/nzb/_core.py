@@ -383,6 +383,22 @@ class NzbMetaEditor:
         return cls(read_nzb_file(nzb))
 
     def sort(self, key: Callable[[str | None], SupportsRichComparison] | None = None) -> Self:
+        """
+        Sort the metadata fields.
+
+        Parameters
+        ----------
+        key : Callable[[str | None], SupportsRichComparison], optional
+            A callable that takes the 'type' attribute of a <meta> element
+            (or None if the attribute is missing) and returns a value that
+            can be used for comparison.
+
+        Returns
+        -------
+        Self
+            Returns itself.
+
+        """
         if key is None:
 
             def key(type: str | None) -> int:  # pragma: no cover
