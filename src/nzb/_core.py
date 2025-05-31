@@ -391,7 +391,7 @@ class NzbMetaEditor:
 
                 return {"title": 0, "category": 1, "password": 2, "tag": 3}.get(type, -1)
 
-        if head := self._tree.find("./head"):
+        if (head := self._tree.find("./head")) is not None:
             head[:] = sorted(
                 head.findall("./meta"),
                 key=lambda element: key(element.get("type")),
@@ -527,7 +527,7 @@ class NzbMetaEditor:
 
         """
 
-        if head := self._tree.find("./head"):
+        if (head := self._tree.find("./head")) is not None:
             matches = [meta for meta in head.findall("./meta") if meta.get("type") == key]
 
             for match in matches:
@@ -545,7 +545,7 @@ class NzbMetaEditor:
             Returns itself.
 
         """
-        if head := self._tree.find("./head"):
+        if (head := self._tree.find("./head")) is not None:
             head.clear()
             self._tree.remove(head)
         return self
