@@ -7,13 +7,10 @@ from __future__ import annotations
 
 import re
 from datetime import datetime, timezone
-from typing import TYPE_CHECKING
+from xml.etree import ElementTree
 
 from nzb._exceptions import InvalidNzbError
 from nzb._models import File, Meta, Segment
-
-if TYPE_CHECKING:
-    from xml.etree import ElementTree
 
 
 def parse_metadata(nzb: ElementTree.Element) -> Meta:
@@ -156,27 +153,36 @@ def parse_files(nzb: ElementTree.Element) -> tuple[File, ...]:
     return tuple(sorted(files, key=lambda file: file.subject))
 
 
-def parse_doctype(nzb: str) -> str | None:
+def generate_header(nzb: str) -> str:
     """
-    Parse the DOCTYPE from an NZB file.
+    Generate the two line header commonly seen in NZBs.
 
-    Quoting https://www.oreilly.com/library/view/xml-pocket-reference/9780596100506/ch01s02s09.html:
-
-    "A document type or DOCTYPE declaration provides information
-    to a validating XML parser about how to validate an XML document.
-    The DOCTYPE keyword appears first; then the document, or root,
-    element of the document being validated is identified,
-    followed by either a SYSTEM or PUBLIC identifier."
-
-    Example:
     ```xml
     <?xml version="1.0" encoding="UTF-8"?>
     <!DOCTYPE nzb PUBLIC "-//newzBin//DTD NZB 1.1//EN" "http://www.newzbin.com/DTD/nzb/nzb-1.1.dtd">
-    <nzb xmlns="http://www.newzbin.com/DTD/2003/nzb">
-    ...
-    </nzb>
     ```
 
     """
-    doctype = re.search(r"<!DOCTYPE nzb.*>", nzb, re.IGNORECASE)
-    return doctype.group() if doctype else None
+    header = '<?xml version="1.0" encoding="UTF-8"?>\n'
+    if doctype := re.search(r"<!DOCTYPE nzb.*>", nzb, re.IGNORECASE):
+        header += doctype.group().strip() + "\n"
+    return header
+
+
+def sanitize_xml(xml: str) -> str:
+    xml = re.sub(r"^<\?xml\s+version.*\?>", "", xml.strip(), flags=re.IGNORECASE)
+    xml = re.sub(r"^<!DOCTYPE.*>", "", xml.strip(), flags=re.IGNORECASE)
+    xml = re.sub(r"^<nzb(\s*xmlns.*?)>", "<nzb>", xml.strip(), flags=re.IGNORECASE)
+    return xml.strip()
+
+
+def nzb_to_tree(nzb: str) -> ElementTree.Element:
+    """
+    xmltodict.parse() raises ExpatError if there's a newline at the start,
+    so we use this wrapper that calls .strip() before passing it on to xmltodict.
+    """
+    try:
+        return ElementTree.fromstring(sanitize_xml(nzb))
+    except ElementTree.ParseError:
+        msg = "The NZB document is not valid XML and could not be parsed."
+        raise InvalidNzbError(msg) from None

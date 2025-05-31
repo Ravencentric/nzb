@@ -26,7 +26,7 @@ def dedent(s: str) -> str:
 def test_meta_clear(nzb_file: Path) -> None:
     edited = NzbMetaEditor.from_file(nzb_file).clear().to_str()
     assert edited == dedent("""
-    <?xml version="1.0" encoding="utf-8"?>
+    <?xml version="1.0" encoding="UTF-8"?>
     <!DOCTYPE nzb PUBLIC "-//newzBin//DTD NZB 1.1//EN" "http://www.newzbin.com/DTD/nzb/nzb-1.1.dtd">
     <nzb xmlns="http://www.newzbin.com/DTD/2003/nzb">
         <file poster="Joe Bloggs &lt;bloggs@nowhere.example&gt;" date="1071674882" subject="Here's your file!  abc-mr2a.r01 (1/2)">
@@ -47,7 +47,7 @@ def test_nzb_with_no_head_clear() -> None:
     nzb = NZB_DIR / "nzb_with_no_head.nzb"
     edited = NzbMetaEditor.from_file(nzb).clear().to_str()
     assert edited == dedent("""
-    <?xml version="1.0" encoding="utf-8"?>
+    <?xml version="1.0" encoding="UTF-8"?>
     <!DOCTYPE nzb PUBLIC "-//newzBin//DTD NZB 1.1//EN" "http://www.newzbin.com/DTD/nzb/nzb-1.1.dtd">
     <nzb xmlns="http://www.newzbin.com/DTD/2003/nzb">
         <file poster="Joe Bloggs &lt;bloggs@nowhere.example&gt;" date="1071674882" subject="Here's your file!  abc-mr2a.r01 (1/2)">
@@ -68,7 +68,7 @@ def test_meta_remove_append() -> None:
     nzb = NZB_DIR / "spec_example.nzb"
     edited = NzbMetaEditor.from_file(nzb).remove("password").append(passwords="new secret!").to_str()
     assert edited == dedent("""
-    <?xml version="1.0" encoding="utf-8"?>
+    <?xml version="1.0" encoding="UTF-8"?>
     <!DOCTYPE nzb PUBLIC "-//newzBin//DTD NZB 1.1//EN" "http://www.newzbin.com/DTD/nzb/nzb-1.1.dtd">
     <nzb xmlns="http://www.newzbin.com/DTD/2003/nzb">
         <head>
@@ -95,7 +95,7 @@ def test_meta_append_when_file_has_no_meta() -> None:
     nzb = NZB_DIR / "no_meta.nzb"
     edited = NzbMetaEditor.from_file(nzb).append(passwords="password appended").to_str()
     assert edited == dedent("""
-    <?xml version="1.0" encoding="utf-8"?>
+    <?xml version="1.0" encoding="UTF-8"?>
     <!DOCTYPE nzb PUBLIC "-//newzBin//DTD NZB 1.1//EN" "http://www.newzbin.com/DTD/nzb/nzb-1.1.dtd">
     <nzb xmlns="http://www.newzbin.com/DTD/2003/nzb">
         <head>
@@ -119,7 +119,7 @@ def test_meta_append_when_file_has_single_meta() -> None:
     nzb = NZB_DIR / "single_meta.nzb"
     edited = NzbMetaEditor.from_file(nzb).append(tags="tag appended").to_str()
     assert edited == dedent("""
-    <?xml version="1.0" encoding="utf-8"?>
+    <?xml version="1.0" encoding="UTF-8"?>
     <!DOCTYPE nzb PUBLIC "-//newzBin//DTD NZB 1.1//EN" "http://www.newzbin.com/DTD/nzb/nzb-1.1.dtd">
     <nzb xmlns="http://www.newzbin.com/DTD/2003/nzb">
         <head>
@@ -144,7 +144,7 @@ def test_meta_set_when_file_has_no_meta() -> None:
     nzb = NZB_DIR / "no_meta.nzb"
     edited = NzbMetaEditor.from_file(nzb).set(title="Big Buck Bunny").to_str()
     assert edited == dedent("""
-    <?xml version="1.0" encoding="utf-8"?>
+    <?xml version="1.0" encoding="UTF-8"?>
     <!DOCTYPE nzb PUBLIC "-//newzBin//DTD NZB 1.1//EN" "http://www.newzbin.com/DTD/nzb/nzb-1.1.dtd">
     <nzb xmlns="http://www.newzbin.com/DTD/2003/nzb">
         <head>
@@ -168,7 +168,7 @@ def test_meta_set_when_file_has_single_meta() -> None:
     nzb = NZB_DIR / "single_meta.nzb"
     edited = NzbMetaEditor.from_file(nzb).set(title="Big Buck Bunny").to_str()
     assert edited == dedent("""
-    <?xml version="1.0" encoding="utf-8"?>
+    <?xml version="1.0" encoding="UTF-8"?>
     <!DOCTYPE nzb PUBLIC "-//newzBin//DTD NZB 1.1//EN" "http://www.newzbin.com/DTD/nzb/nzb-1.1.dtd">
     <nzb xmlns="http://www.newzbin.com/DTD/2003/nzb">
         <head>
@@ -256,16 +256,16 @@ def test_meta_set(tmp_path: Path) -> None:
         </file>
     </nzb>
     """)
-    edited = NzbMetaEditor(nzb).set(title="New title", tags=["test", "test2"]).to_str()
+    edited = NzbMetaEditor(nzb).set(title="New title", tags=["test", "test2"], passwords="New secret").to_str()
 
     assert edited == dedent("""
-    <?xml version="1.0" encoding="utf-8"?>
+    <?xml version="1.0" encoding="UTF-8"?>
     <!DOCTYPE nzb PUBLIC "-//newzBin//DTD NZB 1.1//EN" "http://www.newzbin.com/DTD/nzb/nzb-1.1.dtd">
     <nzb xmlns="http://www.newzbin.com/DTD/2003/nzb">
         <head>
             <meta type="title">New title</meta>
             <meta type="category">TV</meta>
-            <meta type="password">secret</meta>
+            <meta type="password">New secret</meta>
             <meta type="tag">test</meta>
             <meta type="tag">test2</meta>
         </head>
@@ -285,14 +285,14 @@ def test_meta_set(tmp_path: Path) -> None:
 
 def test_meta_set_empty() -> None:
     nzb = dedent("""
-    <?xml version="1.0" encoding="utf-8"?>
+    <?xml version="1.0" encoding="UTF-8"?>
     <!DOCTYPE nzb PUBLIC "-//newzBin//DTD NZB 1.1//EN" "http://www.newzbin.com/DTD/nzb/nzb-1.1.dtd">
     <nzb xmlns="http://www.newzbin.com/DTD/2003/nzb">
         <head>
             <meta type="title">Your File!</meta>
+            <meta type="category">TV</meta>
             <meta type="password">secret</meta>
             <meta type="tag">HD</meta>
-            <meta type="category">TV</meta>
         </head>
         <file poster="Joe Bloggs &lt;bloggs@nowhere.example&gt;" date="1071674882" subject="Here's your file!  abc-mr2a.r01 (1/2)">
             <groups>
@@ -312,7 +312,7 @@ def test_meta_set_empty() -> None:
 
 def test_meta_save_overwrite(tmp_path: Path) -> None:
     nzb = dedent("""
-    <?xml version="1.0" encoding="utf-8"?>
+    <?xml version="1.0" encoding="UTF-8"?>
     <!DOCTYPE nzb PUBLIC "-//newzBin//DTD NZB 1.1//EN" "http://www.newzbin.com/DTD/nzb/nzb-1.1.dtd">
     <nzb xmlns="http://www.newzbin.com/DTD/2003/nzb">
         <file poster="Joe Bloggs &lt;bloggs@nowhere.example&gt;" date="1071674882" subject="Here's your file!  abc-mr2a.r01 (1/2)">
@@ -336,12 +336,12 @@ def test_meta_save_overwrite(tmp_path: Path) -> None:
 
 
 def test_no_doctype() -> None:
-    # Since xmltodict does not preserve doctype,
+    # Since xml.etree.ElementTree does not preserve doctype,
     # we do our own hack on top to preserve it *if* it's
     # there, so we have this test to make sure we handle
     # the case where there is no doctype.
     original = dedent("""
-    <?xml version="1.0" encoding="utf-8"?>
+    <?xml version="1.0" encoding="UTF-8"?>
     <nzb xmlns="http://www.newzbin.com/DTD/2003/nzb">
         <file poster="Joe Bloggs &lt;bloggs@nowhere.example&gt;" date="1071674882" subject="Here's your file!  abc-mr2a.r01 (1/2)">
             <groups>
@@ -383,7 +383,7 @@ def test_meta_editor_append_title() -> None:
     """)
     editor = NzbMetaEditor(s).set(title="Big Buck Bunny", category="Movie").append(tags="1080p", passwords="secret2")
     assert editor.to_str() == dedent("""
-    <?xml version="1.0" encoding="utf-8"?>
+    <?xml version="1.0" encoding="UTF-8"?>
     <!DOCTYPE nzb PUBLIC "-//newzBin//DTD NZB 1.1//EN" "http://www.newzbin.com/DTD/nzb/nzb-1.1.dtd">
     <nzb xmlns="http://www.newzbin.com/DTD/2003/nzb">
         <head>
@@ -394,7 +394,7 @@ def test_meta_editor_append_title() -> None:
             <meta type="tag">HD</meta>
             <meta type="tag">1080p</meta>
         </head>
-        <file poster="John &lt;nzb@nowhere.example&gt;" date="1706440708" subject='[1/1] - "Big Buck Bunny - S01E01.mkv" yEnc (1/2) 1478616'>
+        <file poster="John &lt;nzb@nowhere.example&gt;" date="1706440708" subject="[1/1] - &quot;Big Buck Bunny - S01E01.mkv&quot; yEnc (1/2) 1478616">
             <groups>
                 <group>alt.binaries.boneless</group>
             </groups>

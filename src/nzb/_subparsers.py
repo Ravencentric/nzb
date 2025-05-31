@@ -2,9 +2,6 @@ from __future__ import annotations
 
 import re
 from typing import TYPE_CHECKING
-from xml.etree import ElementTree
-
-from nzb._exceptions import InvalidNzbError
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -16,25 +13,6 @@ if TYPE_CHECKING:
     def cache(_: Callable[P, T], /) -> Callable[P, T]: ...
 else:
     from functools import cache
-
-
-def sanitize_xml(xml: str) -> str:
-    xml = re.sub(r"^<\?xml\s+version.*\?>", "", xml.strip(), flags=re.IGNORECASE)
-    xml = re.sub(r"^<!DOCTYPE.*>", "", xml.strip(), flags=re.IGNORECASE)
-    xml = re.sub(r"^<nzb(\s*xmlns.*?)>", "<nzb>", xml.strip(), flags=re.IGNORECASE)
-    return xml.strip()
-
-
-def nzb_to_tree(nzb: str) -> ElementTree.Element:
-    """
-    xmltodict.parse() raises ExpatError if there's a newline at the start,
-    so we use this wrapper that calls .strip() before passing it on to xmltodict.
-    """
-    try:
-        return ElementTree.fromstring(sanitize_xml(nzb))
-    except ElementTree.ParseError:
-        msg = "The NZB document is not valid XML and could not be parsed."
-        raise InvalidNzbError(msg) from None
 
 
 @cache

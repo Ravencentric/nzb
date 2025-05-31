@@ -89,7 +89,7 @@ def test_parsing_invalid_nzb(input_xml: str, expected_error: str) -> None:
 def test_editing_invalid_nzb() -> None:
     with pytest.raises(
         InvalidNzbError,
-        match="The NZB document is not valid XML and could not be parsed: no element found: line 19, column 11",
+        match="The NZB document is not valid XML and could not be parsed.",
     ):
         NzbMetaEditor(invalid_xml)
 
