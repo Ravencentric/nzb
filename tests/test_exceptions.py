@@ -4,12 +4,10 @@ import json
 import re
 import textwrap
 from pathlib import Path
-from typing import Any, Literal
 
 import pytest
 
 from nzb import InvalidNzbError, Nzb, NzbMetaEditor
-from nzb._parsers import parse_files, parse_groups, parse_segments
 from nzb._utils import read_nzb_file
 
 NZB_DIR = Path(__file__).parent.resolve() / "__nzbs__"
@@ -77,7 +75,7 @@ def test_saving_overwrite() -> None:
     [
         pytest.param(
             invalid_xml,
-            "The NZB document is not valid XML and could not be parsed: no element found: line 19, column 11",
+            "The NZB document is not valid XML and could not be parsed.",
             id="truncated_xml",
         ),
         pytest.param(valid_xml_but_invalid_nzb, INVALID_NZB_ERROR_SEGMENTS_ELEMENT, id="missing_segments"),
@@ -91,7 +89,7 @@ def test_parsing_invalid_nzb(input_xml: str, expected_error: str) -> None:
 def test_editing_invalid_nzb() -> None:
     with pytest.raises(
         InvalidNzbError,
-        match="The NZB document is not valid XML and could not be parsed: no element found: line 19, column 11",
+        match="The NZB document is not valid XML and could not be parsed.",
     ):
         NzbMetaEditor(invalid_xml)
 
@@ -206,33 +204,6 @@ def test_nzb_with_missing_file_subject() -> None:
 def test_non_existent_file() -> None:
     with pytest.raises(FileNotFoundError, match="blahblah"):
         Nzb.from_file("blahblah")
-
-
-@pytest.mark.parametrize("segments", ({"blah": "blah"}, None, {"segment": []}))
-def test_parse_segements(segments: dict[Literal["segment"], list[dict[str, str]] | dict[str, str]] | None) -> None:
-    with pytest.raises(
-        InvalidNzbError,
-        match=INVALID_NZB_ERROR_SEGMENTS_ELEMENT,
-    ):
-        parse_segments(segments)
-
-
-@pytest.mark.parametrize("groups", ({"blah": "blah"}, None, {"group": []}))
-def test_parse_groups(groups: dict[Literal["group"], list[str] | str] | None) -> None:
-    with pytest.raises(
-        InvalidNzbError,
-        match=INVALID_NZB_ERROR_GROUPS_ELEMENT,
-    ):
-        parse_groups(groups)
-
-
-@pytest.mark.parametrize("nzb", ({"nzb": {"file": []}}, None))
-def test_parse_files(nzb: dict[str, Any]) -> None:
-    with pytest.raises(
-        InvalidNzbError,
-        match=INVALID_NZB_ERROR_FILE_ELEMENT,
-    ):
-        parse_files(nzb)
 
 
 def test_nzb_from_json() -> None:
