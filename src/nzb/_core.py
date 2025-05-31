@@ -600,4 +600,4 @@ class NzbMetaEditor:
 
         outfile.parent.mkdir(parents=True, exist_ok=True)
         outfile.write_text(self.to_str(), encoding="utf-8")
-        return outfile.resolve()
+        return outfile
