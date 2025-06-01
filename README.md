@@ -21,7 +21,7 @@ pip install nzb
 
 ## Docs
 
-Checkout the [tutorial](https://nzb.ravencentric.cc/tutorial/) and the [API reference](https://nzb.ravencentric.cc/api-reference/parser/).
+Checkout the [tutorial](https://ravencentric.cc/nzb/tutorial/) and the [API reference](https://ravencentric.cc/nzb/api-reference/parser/).
 
 ## License
 

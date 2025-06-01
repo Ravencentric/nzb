@@ -18,8 +18,7 @@ classifiers = [
 dependencies = []
 
 [project.urls]
-Homepage = "https://nzb.ravencentric.cc"
-Documentation = "https://nzb.ravencentric.cc"
+Documentation = "https://ravencentric.cc/nzb/"
 Repository = "https://github.com/Ravencentric/nzb"
 
 [dependency-groups]
