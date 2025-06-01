@@ -2,24 +2,22 @@ from __future__ import annotations
 
 import dataclasses
 import json
-from collections import OrderedDict
 from dataclasses import dataclass, field
 from datetime import datetime
 from functools import cached_property
 from typing import TYPE_CHECKING, Any, Literal, overload
-
-import xmltodict
+from xml.etree import ElementTree
 
 from nzb._exceptions import InvalidNzbError
 from nzb._models import File, Meta, Segment
-from nzb._parsers import parse_doctype, parse_files, parse_metadata
-from nzb._utils import construct_meta, nzb_to_dict, read_nzb_file, realpath, remove_meta_fields, sort_meta
+from nzb._parsers import generate_header, nzb_to_tree, parse_files, parse_metadata
+from nzb._utils import read_nzb_file, realpath, to_iterable
 
 if TYPE_CHECKING:
-    from collections.abc import Iterable
+    from collections.abc import Callable, Iterable
     from pathlib import Path
 
-    from _typeshed import StrPath
+    from _typeshed import StrPath, SupportsRichComparison
     from typing_extensions import Self
 
 
@@ -91,9 +89,9 @@ class Nzb:
             Raised if the NZB is invalid.
 
         """
-        nzbdict = nzb_to_dict(nzb)
-        meta = parse_metadata(nzbdict)
-        files = parse_files(nzbdict)
+        tree = nzb_to_tree(nzb)
+        meta = parse_metadata(tree)
+        files = parse_files(tree)
 
         return cls(meta=meta, files=files)
 
@@ -364,7 +362,7 @@ class NzbMetaEditor:
 
         """  # noqa: E501
         self._nzb = nzb
-        self._nzbdict = nzb_to_dict(self._nzb)
+        self._tree = nzb_to_tree(self._nzb)
 
     @classmethod
     def from_file(cls, nzb: StrPath, /) -> Self:
@@ -384,17 +382,50 @@ class NzbMetaEditor:
         """
         return cls(read_nzb_file(nzb))
 
-    def _get_meta(self) -> list[dict[str, str]] | dict[str, str] | None:
+    def sort(self, key: Callable[[ElementTree.Element], SupportsRichComparison] | None = None) -> Self:
         """
-        Retrieve current metadata from the NZB.
+        Sort the metadata fields.
+
+        Parameters
+        ----------
+        key : Callable[[ElementTree.Element], SupportsRichComparison], optional
+            A callable that takes a `<meta>` Element and returns a comparable
+            value.
 
         Returns
         -------
-        list[dict[str, str]] | dict[str, str] | None
-            The metadata as a list of dictionaries, a single dictionary, or `None` if not found.
+        Self
+            Returns itself.
+
+        Examples
+        --------
+        Here's an example where we sort the meta fields by their type.
+        This is also what `sort()` does when you call it without a key.
+        ```py
+        editor = NzbMetaEditor(...)
+
+        def key(element: ElementTree.Element) -> int:
+            if typ := element.get("type"):
+                return {"title": 0, "category": 1, "password": 2, "tag": 3}.get(typ, -1)
+            return -1
+
+        editor.sort(key=key)
+        ```
 
         """
-        return self._nzbdict.get("nzb", {}).get("head", {}).get("meta")  # type: ignore[no-any-return]
+        if key is None:
+
+            def key(element: ElementTree.Element) -> int:  # pragma: no cover
+                if typ := element.get("type"):
+                    return {"title": 0, "category": 1, "password": 2, "tag": 3}.get(typ, -1)
+                return -1
+
+        if (head := self._tree.find("./head")) is not None:
+            head[:] = sorted(
+                head.findall("./meta"),
+                key=key,
+            )
+        return self
 
     def set(
         self,
@@ -427,35 +458,38 @@ class NzbMetaEditor:
 
         """
 
-        if title is None and passwords is None and tags is None and category is None:
-            return self
+        head = self._tree.find("./head")
+        if head is None:
+            head = ElementTree.Element("head")
+            self._tree.insert(0, head)
 
-        meta = self._get_meta()
+        if title:
+            self.remove("title")
+            sub = ElementTree.SubElement(head, "meta")
+            sub.set("type", "title")
+            sub.text = title
 
-        if meta is None:
-            nzb = OrderedDict(self._nzbdict["nzb"])
-            nzb["head"] = {}
-            nzb["head"]["meta"] = sort_meta(
-                construct_meta(title=title, passwords=passwords, tags=tags, category=category)
-            )
-            nzb.move_to_end("file")
-            self._nzbdict["nzb"] = nzb
-            return self
+        if passwords:
+            self.remove("password")
+            for password in to_iterable(passwords):
+                sub = ElementTree.SubElement(head, "meta")
+                sub.set("type", "password")
+                sub.text = password
 
-        new_meta = [meta] if isinstance(meta, dict) else meta
+        if tags:
+            self.remove("tag")
+            for tag in to_iterable(tags):
+                sub = ElementTree.SubElement(head, "meta")
+                sub.set("type", "tag")
+                sub.text = tag
 
-        fields_to_remove = {
-            "title": title is not None,
-            "category": category is not None,
-            "password": passwords is not None,
-            "tag": tags is not None,
-        }
+        if category:
+            self.remove("category")
+            sub = ElementTree.SubElement(head, "meta")
+            sub.set("type", "category")
+            sub.text = category
 
-        filtered_meta = remove_meta_fields(new_meta, [k for k, v in fields_to_remove.items() if v])
-        filtered_meta.extend(construct_meta(title=title, passwords=passwords, tags=tags, category=category))
-        self._nzbdict["nzb"]["head"]["meta"] = sort_meta(filtered_meta)
-
-        return self
+        return self.sort()
 
     def append(
         self,
@@ -480,17 +514,24 @@ class NzbMetaEditor:
 
         """
 
-        meta = self._get_meta()
+        head = self._tree.find("./head")
+        if head is None:
+            head = ElementTree.Element("head")
+            self._tree.insert(0, head)
 
-        if meta is None:
-            return self.set(passwords=passwords, tags=tags)
+        if passwords:
+            for password in to_iterable(passwords):
+                sub = ElementTree.SubElement(head, "meta")
+                sub.set("type", "password")
+                sub.text = password
 
-        new_meta = [meta] if isinstance(meta, dict) else meta
-        new_meta.extend(construct_meta(passwords=passwords, tags=tags))
+        if tags:
+            for tag in to_iterable(tags):
+                sub = ElementTree.SubElement(head, "meta")
+                sub.set("type", "tag")
+                sub.text = tag
 
-        self._nzbdict["nzb"]["head"]["meta"] = sort_meta(new_meta)
-
-        return self
+        return self.sort()
 
     @overload
     def remove(self, key: Literal["title", "password", "tag", "category"]) -> Self: ...
@@ -515,17 +556,12 @@ class NzbMetaEditor:
 
         """
 
-        meta = self._get_meta()
+        if (head := self._tree.find("./head")) is not None:
+            matches = [meta for meta in head.findall("./meta") if meta.get("type") == key]
 
-        if meta is None:
-            return self
+            for match in matches:
+                head.remove(match)
 
-        if isinstance(meta, dict):
-            if key == meta["@type"]:
-                return self.clear()
-            return self
-        new_meta = [row for row in meta if row["@type"] != key]
-        self._nzbdict["nzb"]["head"]["meta"] = sort_meta(new_meta)
         return self
 
     def clear(self) -> Self:
@@ -538,11 +574,9 @@ class NzbMetaEditor:
             Returns itself.
 
         """
-        try:
-            del self._nzbdict["nzb"]["head"]
-        except KeyError:
-            pass
-
+        if (head := self._tree.find("./head")) is not None:
+            head.clear()
+            self._tree.remove(head)
         return self
 
     def to_str(self) -> str:
@@ -555,15 +589,14 @@ class NzbMetaEditor:
             Edited NZB.
 
         """
-        unparsed = xmltodict.unparse(self._nzbdict, encoding="utf-8", pretty=True, indent="    ")
-
-        if doctype := parse_doctype(self._nzb):
-            # see: https://github.com/martinblech/xmltodict/issues/351
-            nzb = unparsed.splitlines()
-            nzb.insert(1, doctype)
-            return "\n".join(nzb)
-
-        return unparsed.strip()
+        ElementTree.indent(self._tree, space=" " * 4)
+        body: str = ElementTree.tostring(
+            self._tree,
+            encoding="utf-8",
+            xml_declaration=False,
+        ).decode("utf-8")
+        body = body.replace("<nzb>", '<nzb xmlns="http://www.newzbin.com/DTD/2003/nzb">')
+        return generate_header(self._nzb) + body
 
     def to_file(self, filename: StrPath, *, overwrite: bool = False) -> Path:
         """
@@ -596,4 +629,4 @@ class NzbMetaEditor:
 
         outfile.parent.mkdir(parents=True, exist_ok=True)
         outfile.write_text(self.to_str(), encoding="utf-8")
-        return outfile.resolve()
+        return outfile
