@@ -169,7 +169,10 @@ def generate_header(nzb: str) -> str:
     return header
 
 
-def sanitize_xml(xml: str) -> str:
+def remove_header(xml: str) -> str:
+    """
+    Remove unnecessary headers.
+    """
     xml = re.sub(r"^<\?xml\s+version.*\?>", "", xml.strip(), flags=re.IGNORECASE)
     xml = re.sub(r"^<!DOCTYPE.*>", "", xml.strip(), flags=re.IGNORECASE)
     xml = re.sub(r"^<nzb(\s*xmlns.*?)>", "<nzb>", xml.strip(), flags=re.IGNORECASE)
@@ -178,11 +181,10 @@ def sanitize_xml(xml: str) -> str:
 
 def nzb_to_tree(nzb: str) -> ElementTree.Element:
     """
-    xmltodict.parse() raises ExpatError if there's a newline at the start,
-    so we use this wrapper that calls .strip() before passing it on to xmltodict.
+    Thin wrapper around ElementTree.fromstring for error handling.
     """
     try:
-        return ElementTree.fromstring(sanitize_xml(nzb))
+        return ElementTree.fromstring(remove_header(nzb))
     except ElementTree.ParseError:
         msg = "The NZB document is not valid XML and could not be parsed."
         raise InvalidNzbError(msg) from None
