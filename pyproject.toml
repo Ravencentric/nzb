@@ -67,9 +67,6 @@ extend-select = [
 ]
 fixable = ["ALL"]
 
-[tool.ruff.lint.flake8-type-checking]
-runtime-evaluated-base-classes = ["msgspec.Struct"]
-
 [tool.ruff.lint.extend-per-file-ignores]
 "src/nzb/_subparsers.py" = ["PLR"]
 "tests/*" = ["D", "FBT", "PL", "C416", "E501"]
