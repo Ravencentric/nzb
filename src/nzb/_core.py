@@ -382,35 +382,48 @@ class NzbMetaEditor:
         """
         return cls(read_nzb_file(nzb))
 
-    def sort(self, key: Callable[[str | None], SupportsRichComparison] | None = None) -> Self:
+    def sort(self, key: Callable[[ElementTree.Element], SupportsRichComparison] | None = None) -> Self:
         """
         Sort the metadata fields.
 
         Parameters
         ----------
-        key : Callable[[str | None], SupportsRichComparison], optional
-            A callable that takes the 'type' attribute of a <meta> element
-            (or None if the attribute is missing) and returns a value that
-            can be used for comparison.
+        key : Callable[[ElementTree.Element], SupportsRichComparison], optional
+            A callable that takes a `<meta>` Element and returns a comparable
+            value.
 
         Returns
         -------
         Self
             Returns itself.
 
+        Examples
+        --------
+        Here's an example where we sort the meta fields by their type.
+        This is also what `sort()` does when you call it without a key.
+        ```py
+        editor = NzbMetaEditor(...)
+
+        def key(element: ElementTree.Element) -> int:
+            if typ := element.get("type"):
+                return {"title": 0, "category": 1, "password": 2, "tag": 3}.get(typ, -1)
+            return -1
+
+        editor.sort(key=key)
+        ```
+
         """
         if key is None:
 
-            def key(type: str | None) -> int:  # pragma: no cover
-                if type is None:
-                    return -1
-
-                return {"title": 0, "category": 1, "password": 2, "tag": 3}.get(type, -1)
+            def key(element: ElementTree.Element) -> int:  # pragma: no cover
+                if typ := element.get("type"):
+                    return {"title": 0, "category": 1, "password": 2, "tag": 3}.get(typ, -1)
+                return -1
 
         if (head := self._tree.find("./head")) is not None:
             head[:] = sorted(
                 head.findall("./meta"),
-                key=lambda element: key(element.get("type")),
+                key=key,
             )
         return self
 
