@@ -5,8 +5,6 @@ from collections.abc import Iterable
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from nzb._exceptions import InvalidNzbError
-
 if TYPE_CHECKING:
     from _typeshed import StrPath
 
@@ -30,20 +28,13 @@ def read_nzb_file(path: StrPath, /) -> str:
     if not file.is_file():
         raise FileNotFoundError(file)
 
-    try:
-        if file.suffix.casefold() == ".gz":
-            # gzipped nzbs are fairly common (e.g., all of AnimeTosho)
-            try:
-                with gzip.open(file) as f:
-                    data = f.read().decode(encoding=encoding, errors=errors).strip()
-            except gzip.BadGzipFile as e:
-                msg = f"Gzip decompression error for file '{file}': {e}"
-                raise InvalidNzbError(msg) from None
-        else:
-            data = file.read_text(encoding=encoding, errors=errors)
-    except (OSError, UnicodeError) as e:
-        msg = f"I/O error while reading file '{file}': {e}"
-        raise InvalidNzbError(msg) from None
+    if file.suffix.casefold() == ".gz":
+        # gzipped nzbs are fairly common (e.g., all of AnimeTosho)
+        with gzip.open(file) as f:
+            data = f.read().decode(encoding=encoding, errors=errors).strip()
+
+    else:
+        data = file.read_text(encoding=encoding, errors=errors)
 
     return data
 
