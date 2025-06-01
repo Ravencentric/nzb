@@ -8,11 +8,6 @@ from typing import TYPE_CHECKING
 from nzb._exceptions import InvalidNzbError
 
 if TYPE_CHECKING:
-    from typing import TypeVar
-
-    T = TypeVar("T")
-    T2 = TypeVar("T2")
-
     from _typeshed import StrPath
 
 
