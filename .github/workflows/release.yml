@@ -57,7 +57,8 @@ jobs:
           uvx git-cliff --config .github/cliff-template.toml
           --github-repo "${GH_REPO}"
           --github-token "${GH_TOKEN}"
-          --latest --output "CHANGELOG.md"
+          --latest --strip header
+          --output "CHANGELOG.md"
         env:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
