@@ -1,6 +1,6 @@
 [project]
 name = "nzb"
-version = "0.5.1"
+version = "0.5.2"
 description = "A spec compliant parser and meta editor for NZB files."
 authors = [{ name = "Ravencentric", email = "me@ravencentric.cc" }]
 readme = "README.md"
