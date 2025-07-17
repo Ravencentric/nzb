@@ -173,8 +173,8 @@ def remove_header(xml: str) -> str:
     """
     Remove unnecessary headers.
     """
-    xml = re.sub(r"^<\?xml\s+version.*\?>", "", xml.strip(), flags=re.IGNORECASE)
-    xml = re.sub(r"^<!DOCTYPE.*>", "", xml.strip(), flags=re.IGNORECASE)
+    xml = re.sub(r"^<\?xml\s+version.*?\?>", "", xml.strip(), flags=re.IGNORECASE)
+    xml = re.sub(r"^<!DOCTYPE.*?>", "", xml.strip(), flags=re.IGNORECASE)
     xml = re.sub(r"^<nzb(\s*xmlns.*?)>", "<nzb>", xml.strip(), flags=re.IGNORECASE)
     return xml.strip()
 
