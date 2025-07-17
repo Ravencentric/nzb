@@ -204,10 +204,10 @@ class Nzb:
     def file(self) -> File:
         """
         The main content file (episode, movie, etc) in the NZB.
-        This is determined by finding the largest file in the NZB
+        This is determined by finding the largest non par2 file in the NZB
         and may not always be accurate.
         """
-        return max(self.files, key=lambda file: file.size)
+        return max((file for file in self.files if not file.is_par2()), key=lambda file: file.size)
 
     @cached_property
     def size(self) -> int:
