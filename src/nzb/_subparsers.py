@@ -35,7 +35,7 @@ def extract_filename_from_subject(subject: str) -> str | None:
     # from most specific to most general to avoid broader patterns incorrectly matching.
 
     # Case 1: Filename is in quotes.
-    # We use a more relaxed version of what SABnzbd does:
+    # We use a more relaxed version of what SABnzbd uses:
     # https://github.com/sabnzbd/sabnzbd/blob/02b4a116dd4b46b2d2f33f7bbf249f2294458f2e/sabnzbd/nzbstuff.py#L104-L106
     if parsed := re.search(r'"(.*)"', subject):
         filename = parsed.group(1).strip()
