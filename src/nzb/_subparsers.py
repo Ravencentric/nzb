@@ -35,9 +35,11 @@ def extract_filename_from_subject(subject: str) -> str | None:
     # from most specific to most general to avoid broader patterns incorrectly matching.
 
     # Case 1: Filename is in quotes.
+    # We use a more relaxed version of what SABnzbd does:
     # https://github.com/sabnzbd/sabnzbd/blob/02b4a116dd4b46b2d2f33f7bbf249f2294458f2e/sabnzbd/nzbstuff.py#L104-L106
-    if parsed := re.search(r'"([^"]*)"', subject):
-        return parsed.group(1).strip()
+    if parsed := re.search(r'"(.*)"', subject):
+        filename = parsed.group(1).strip()
+        return filename if filename else None
 
     # Case 2: Subject follows a specific pattern.
     # https://regex101.com/r/B03qZs/2
@@ -45,12 +47,14 @@ def extract_filename_from_subject(subject: str) -> str | None:
     if parsed := re.fullmatch(
         r"^(?:\[|\()(?:\d+/\d+)(?:\]|\))\s-\s(.*)\syEnc\s(?:\[|\()(?:\d+/\d+)(?:\]|\))\s\d+", subject
     ):
-        return parsed.group(1).strip()
+        filename = parsed.group(1).strip()
+        return filename if filename else None
 
     # Case 3: Something that might look like a filename.
     # # https://github.com/sabnzbd/sabnzbd/blob/02b4a116dd4b46b2d2f33f7bbf249f2294458f2e/sabnzbd/nzbstuff.py#L104-L106
     if parsed := re.search(r"\b([\w\-+()' .,]+(?:\[[\w\-/+()' .,]*][\w\-+()' .,]*)*\.[A-Za-z0-9]{2,4})\b", subject):
-        return parsed.group(1).strip()
+        filename = parsed.group(1).strip()
+        return filename if filename else None
 
     return None
 
