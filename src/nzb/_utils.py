@@ -9,6 +9,8 @@ from typing import TYPE_CHECKING, Final
 if TYPE_CHECKING:
     from _typeshed import StrPath
 
+    from nzb._models import File
+
 
 # https://github.com/animetosho/Nyuu/blob/e3dc9d20db69071941faa3b76a65aa1eea697fea/help-full.txt#L112
 SORT_KEY_FROM_SUBJECT_RE: Final = re.compile(r"^\[(\d+)\/(\d+)\]")
@@ -28,6 +30,24 @@ def sort_key_from_subject(subject: str) -> str:
         return SORT_KEY_FROM_SUBJECT_RE.sub(f"[{current}/{total}]", subject, count=1)
 
     return subject
+
+
+def find_primary_file(files: tuple[File, ...]) -> File:
+    """
+    Find the main content file (episode, movie, etc) in the NZB.
+    This is best effort and may not always be accurate.
+    """
+    is_bdmv = any(file.name == "index.bdmv" for file in files)
+    candidates = (file for file in files if not file.is_par2())
+
+    if is_bdmv:
+        # BDMVs can have a lot unrelated junk files, so we need to be more specific.
+        return max(
+            (candidate for candidate in candidates if candidate.has_extension("m2ts")),
+            key=lambda candidate: candidate.size,
+        )
+
+    return max(candidates, key=lambda file: file.size)
 
 
 def realpath(path: StrPath, /) -> Path:

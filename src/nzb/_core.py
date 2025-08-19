@@ -11,7 +11,7 @@ from xml.etree import ElementTree
 from nzb._exceptions import InvalidNzbError
 from nzb._models import File, Meta, Segment
 from nzb._parsers import generate_header, nzb_to_tree, parse_files, parse_metadata
-from nzb._utils import read_nzb_file, realpath, to_iterable
+from nzb._utils import find_primary_file, read_nzb_file, realpath, to_iterable
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Iterable
@@ -204,10 +204,10 @@ class Nzb:
     def file(self) -> File:
         """
         The main content file (episode, movie, etc) in the NZB.
-        This is determined by finding the largest non par2 file in the NZB
-        and may not always be accurate.
+        This is determined on a best-effort basis and may not always be accurate.
+        Typically, this will be the largest file in the NZB that is not a `.par2` file.
         """
-        return max((file for file in self.files if not file.is_par2()), key=lambda file: file.size)
+        return find_primary_file(self.files)
 
     @cached_property
     def size(self) -> int:

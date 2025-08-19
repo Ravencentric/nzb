@@ -1,10 +1,16 @@
 from __future__ import annotations
 
 import random
+from datetime import datetime, timezone
+from typing import TYPE_CHECKING
 
 import pytest
 
-from nzb._utils import sort_key_from_subject, to_iterable
+from nzb import File, Segment
+from nzb._utils import find_primary_file, sort_key_from_subject, to_iterable
+
+if TYPE_CHECKING:
+    from collections.abc import Iterable
 
 
 def test_to_iterable() -> None:
@@ -96,3 +102,22 @@ def test_sort_key_from_subject() -> None:
     ]
     randomized = random.sample(control, len(control))
     assert sorted(randomized, key=sort_key_from_subject) == control
+
+
+def test_find_primary_file() -> None:
+    def file(subject: str, segments: Iterable[Segment]) -> File:
+        return File(
+            poster="John Doe <john@example.com>",
+            posted_at=datetime(2025, 1, 1, 1, 0, 0, tzinfo=timezone.utc),
+            subject=subject,
+            groups=(),
+            segments=tuple(segments),
+        )
+
+    assert find_primary_file(
+        (
+            file('[1/3] - "foo.bar" yEnc (1/23594) 16911587328', [Segment(size=7000, number=1, message_id="msg1")]),
+            file('[2/3] - "00001.m2ts" yEnc (1/23594) 16911587328', [Segment(size=6000, number=1, message_id="msg1")]),
+            file('[3/3] - "index.bdmv" yEnc (1/23594) 16911587328', [Segment(size=0, number=1, message_id="msg2")]),
+        )
+    ) == file('[2/3] - "00001.m2ts" yEnc (1/23594) 16911587328', [Segment(size=6000, number=1, message_id="msg1")])
