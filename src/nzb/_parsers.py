@@ -11,6 +11,7 @@ from xml.etree import ElementTree
 
 from nzb._exceptions import InvalidNzbError
 from nzb._models import File, Meta, Segment
+from nzb._utils import sort_key_from_subject
 
 
 def parse_metadata(nzb: ElementTree.Element) -> Meta:
@@ -150,7 +151,7 @@ def parse_files(nzb: ElementTree.Element) -> tuple[File, ...]:
         )
         raise InvalidNzbError(msg)
 
-    return tuple(sorted(files, key=lambda file: file.subject))
+    return tuple(sorted(files, key=lambda file: sort_key_from_subject(file.subject)))
 
 
 def generate_header(nzb: str) -> str:

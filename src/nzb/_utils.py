@@ -1,12 +1,33 @@
 from __future__ import annotations
 
 import gzip
+import re
 from collections.abc import Iterable
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Final
 
 if TYPE_CHECKING:
     from _typeshed import StrPath
+
+
+# https://github.com/animetosho/Nyuu/blob/e3dc9d20db69071941faa3b76a65aa1eea697fea/help-full.txt#L112
+SORT_KEY_FROM_SUBJECT_RE: Final = re.compile(r"^\[(\d+)\/(\d+)\]")
+
+
+def sort_key_from_subject(subject: str) -> str:
+    """
+    Generate a sortable key from a subject string by normalizing the "[1/10]"
+    part of the subject to "[01/10]".
+
+    If no match is found, the original subject is returned unchanged.
+
+    """
+    if match := SORT_KEY_FROM_SUBJECT_RE.search(subject):
+        current, total = match.groups()
+        current = current.zfill(len(total))
+        return SORT_KEY_FROM_SUBJECT_RE.sub(f"[{current}/{total}]", subject, count=1)
+
+    return subject
 
 
 def realpath(path: StrPath, /) -> Path:
