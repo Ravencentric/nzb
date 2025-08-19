@@ -160,4 +160,12 @@ cython_debug/
 #.idea/
 
 .coverage
-test.py
+
+
+# Ignore nzbs everywhere except in the tests directory
+*.nzb
+!tests/*.nzb
+
+# Ignore some top-level files I use for testing
+/*.txt
+/*.py
