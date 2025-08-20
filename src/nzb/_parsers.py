@@ -151,6 +151,14 @@ def parse_files(nzb: ElementTree.Element) -> tuple[File, ...]:
         )
         raise InvalidNzbError(msg)
 
+    if all(file.is_par2() for file in files):
+        msg = (
+            "The NZB document contains only `.par2` files. "
+            "The NZB document must include at least one valid 'file' element that is not a `.par2` file, "
+            "and each 'file' must have at least one valid 'groups' and 'segments' element."
+        )
+        raise InvalidNzbError(msg)
+
     return tuple(sorted(files, key=lambda file: sort_key_from_subject(file.subject)))
 
 
