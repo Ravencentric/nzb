@@ -1,21 +1,8 @@
 from __future__ import annotations
 
 import re
-from typing import TYPE_CHECKING
-
-if TYPE_CHECKING:
-    from collections.abc import Callable
-    from typing import ParamSpec, TypeVar
-
-    T = TypeVar("T")
-    P = ParamSpec("P")
-
-    def cache(_: Callable[P, T], /) -> Callable[P, T]: ...
-else:
-    from functools import cache
 
 
-@cache
 def extract_filename_from_subject(subject: str) -> str | None:
     """
     Extract the complete name of the file with it's extension from the subject.
@@ -59,7 +46,6 @@ def extract_filename_from_subject(subject: str) -> str | None:
     return None
 
 
-@cache
 def name_is_par2(filename: str) -> bool:
     """
     Determine if a given file is likely a par2 file.
@@ -80,7 +66,6 @@ def name_is_par2(filename: str) -> bool:
     return True if parsed else False
 
 
-@cache
 def name_is_rar(filename: str) -> bool:
     """
     Determine if a given file is likely a rar file.
@@ -106,7 +91,6 @@ def name_is_rar(filename: str) -> bool:
     return True if parsed else False
 
 
-@cache
 def stem_is_obfuscated(filestem: str) -> bool:  # pragma: no cover
     """
     Determine if a given file stem is likely obfuscated.
