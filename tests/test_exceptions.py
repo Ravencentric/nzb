@@ -189,6 +189,31 @@ def test_nzb_with_missing_file_subject() -> None:
         Nzb.from_str(nzb)
 
 
+def test_nzb_with_only_par2_files() -> None:
+    match = (
+        "The NZB document contains only `.par2` files. "
+        "The NZB document must include at least one valid 'file' element that is not a `.par2` file, "
+        "and each 'file' must have at least one valid 'groups' and 'segments' element."
+    )
+
+    with pytest.raises(InvalidNzbError, match=match):
+        nzb = textwrap.dedent("""
+        <?xml version="1.0" encoding="UTF-8"?>
+        <!DOCTYPE nzb PUBLIC "-//newzBin//DTD NZB 1.1//EN" "http://www.newzbin.com/DTD/nzb/nzb-1.1.dtd">
+        <nzb xmlns="http://www.newzbin.com/DTD/2003/nzb">
+            <file poster="Joe Bloggs &lt;bloggs@nowhere.example&gt;" date="1590927494" subject="[1/1] - &quot;[Baz] Foobar - 09 (1080p) [0000BEEF].par2&quot; yEnc (1/1) 388">
+                <groups>
+                    <group>alt.binaries.boneless</group>
+                </groups>
+                <segments>
+                    <segment bytes="581" number="1">MtUwAvUsIaGzDhHhJgXsXaFv-1690927494721@nyuu</segment>
+                </segments>
+            </file>
+        </nzb>
+        """).strip()
+        Nzb.from_str(nzb)
+
+
 def test_non_existent_file() -> None:
     with pytest.raises(FileNotFoundError, match="blahblah"):
         Nzb.from_file("blahblah")

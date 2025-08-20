@@ -1,10 +1,16 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from os.path import splitext
 from typing import TYPE_CHECKING
 
-from nzb._subparsers import extract_filename_from_subject, name_is_par2, name_is_rar, stem_is_obfuscated
+from nzb._subparsers import (
+    extract_extension_from_filename,
+    extract_filename_from_subject,
+    extract_stem_from_filename,
+    name_is_par2,
+    name_is_rar,
+    stem_is_obfuscated,
+)
 
 if TYPE_CHECKING:
     from datetime import datetime
@@ -70,10 +76,7 @@ class File:
         Base name of the file without it's extension extracted from the [`File.name`][nzb._models.File.name].
         May return `None` if it fails to extract the stem.
         """
-        if not self.name:
-            return None
-        root, _ = splitext(self.name)
-        return root
+        return extract_stem_from_filename(self.name) if self.name else None
 
     @property
     def extension(self) -> str | None:
@@ -81,10 +84,7 @@ class File:
         Extension of the file without the leading dot extracted from the [`File.name`][nzb._models.File.name].
         May return `None` if it fails to extract the extension.
         """
-        if not self.name:
-            return None
-        _, ext = splitext(self.name)
-        return ext.removeprefix(".")
+        return extract_extension_from_filename(self.name) if self.name else None
 
     def has_extension(self, ext: str, /) -> bool:
         """

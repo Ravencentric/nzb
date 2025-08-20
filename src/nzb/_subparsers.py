@@ -90,6 +90,47 @@ def name_is_rar(filename: str) -> bool:
     return True if parsed else False
 
 
+def extract_extension_from_filename(filename: str) -> str | None:
+    """
+    Extract the extension from a filename.
+
+    Parameters
+    ----------
+    filename : str
+        The name of the file with its extension.
+
+    Returns
+    -------
+    str | None
+        The file extension without the leading dot, or `None` if no extension is found.
+
+    """
+    if match := re.search(r"\.([a-z]\w{2,5})$", filename, re.IGNORECASE):
+        return match.group(1)
+
+    return None
+
+
+def extract_stem_from_filename(filename: str) -> str | None:
+    """
+    Extract the stem (name without extension) from a filename.
+
+    Parameters
+    ----------
+    filename : str
+        The name of the file with its extension.
+
+    Returns
+    -------
+    str | None
+        The stem of the file, or `None` if it fails to extract the stem.
+
+    """
+    if extension := extract_extension_from_filename(filename):
+        return filename.rsplit(f".{extension}", maxsplit=1)[0]
+    return filename
+
+
 def stem_is_obfuscated(filestem: str) -> bool:  # pragma: no cover
     """
     Determine if a given file stem is likely obfuscated.
