@@ -62,8 +62,7 @@ def name_is_par2(filename: str) -> bool:
     """
     if not filename:
         return False
-    parsed = re.search(r"\.par2$", filename, re.IGNORECASE)
-    return True if parsed else False
+    return filename.casefold().endswith(".par2")
 
 
 def name_is_rar(filename: str) -> bool:
