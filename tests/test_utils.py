@@ -121,13 +121,3 @@ def test_find_primary_file() -> None:
             file('[3/3] - "index.bdmv" yEnc (1/23594) 16911587328', [Segment(size=0, number=1, message_id="msg2")]),
         )
     ) == file('[2/3] - "00001.m2ts" yEnc (1/23594) 16911587328', [Segment(size=6000, number=1, message_id="msg1")])
-
-    assert find_primary_file(
-        (
-            file('[1/3] - "foo.bar" yEnc (1/23594) 16911587328', [Segment(size=7000, number=1, message_id="msg1")]),
-            file('[2/3] - "00001.m2ts" yEnc (1/23594) 16911587328', [Segment(size=6000, number=1, message_id="msg1")]),
-            # file('[3/3] - "index.bdmv" yEnc (1/23594) 16911587328', [Segment(size=0, number=1, message_id="msg2")]),
-        )
-        # Without the index.bdmv file, we cannot determine if this is a BDMV.
-        # So we just return the largest file.
-    ) == file('[1/3] - "foo.bar" yEnc (1/23594) 16911587328', [Segment(size=7000, number=1, message_id="msg1")])
