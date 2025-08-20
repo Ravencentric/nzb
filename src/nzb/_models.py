@@ -4,11 +4,10 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 from nzb._subparsers import (
-    extract_extension_from_filename,
     extract_filename_from_subject,
-    extract_stem_from_filename,
     name_is_par2,
     name_is_rar,
+    split_filename_at_extension,
     stem_is_obfuscated,
 )
 
@@ -76,7 +75,10 @@ class File:
         Base name of the file without it's extension extracted from the [`File.name`][nzb._models.File.name].
         May return `None` if it fails to extract the stem.
         """
-        return extract_stem_from_filename(self.name) if self.name else None
+        if self.name:
+            stem, _ = split_filename_at_extension(self.name)
+            return stem
+        return None
 
     @property
     def extension(self) -> str | None:
@@ -84,7 +86,10 @@ class File:
         Extension of the file without the leading dot extracted from the [`File.name`][nzb._models.File.name].
         May return `None` if it fails to extract the extension.
         """
-        return extract_extension_from_filename(self.name) if self.name else None
+        if self.name:
+            _, extension = split_filename_at_extension(self.name)
+            return extension
+        return None
 
     def has_extension(self, ext: str, /) -> bool:
         """

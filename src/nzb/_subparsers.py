@@ -90,9 +90,10 @@ def name_is_rar(filename: str) -> bool:
     return True if parsed else False
 
 
-def extract_extension_from_filename(filename: str) -> str | None:
+def split_filename_at_extension(filename: str) -> tuple[str, str | None]:
     """
-    Extract the extension from a filename.
+    Split a filename into a stem and an extension based on a specific pattern.
+    `os.path.splitext` has too many false positives, so we use a custom regex.
 
     Parameters
     ----------
@@ -101,34 +102,17 @@ def extract_extension_from_filename(filename: str) -> str | None:
 
     Returns
     -------
-    str | None
-        The file extension without the leading dot, or `None` if no extension is found.
+    tuple[str, str | None]
+        A tuple containing the (stem, extension).
+        If no valid extension is found, the extension is None.
 
     """
-    if match := re.search(r"\.([a-z]\w{2,5})$", filename, re.IGNORECASE):
-        return match.group(1)
+    if match := re.search(r"(\.[a-z]\w{2,5})$", filename, re.IGNORECASE):
+        stem = filename[: match.start()]
+        extension = match.group(0).removeprefix(".")
+        return (stem, extension)
 
-    return None
-
-
-def extract_stem_from_filename(filename: str) -> str | None:
-    """
-    Extract the stem (name without extension) from a filename.
-
-    Parameters
-    ----------
-    filename : str
-        The name of the file with its extension.
-
-    Returns
-    -------
-    str | None
-        The stem of the file, or `None` if it fails to extract the stem.
-
-    """
-    if extension := extract_extension_from_filename(filename):
-        return filename.rsplit(f".{extension}", maxsplit=1)[0]
-    return filename
+    return (filename, None)
 
 
 def stem_is_obfuscated(filestem: str) -> bool:  # pragma: no cover

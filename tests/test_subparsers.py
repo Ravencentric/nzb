@@ -3,11 +3,10 @@ from __future__ import annotations
 import pytest
 
 from nzb._subparsers import (
-    extract_extension_from_filename,
     extract_filename_from_subject,
-    extract_stem_from_filename,
     name_is_par2,
     name_is_rar,
+    split_filename_at_extension,
 )
 
 
@@ -68,5 +67,4 @@ def test_name_is_par2() -> None:
 )
 def test_file_extraction(subject: str, filename: str, stem: str, extension: str) -> None:
     assert extract_filename_from_subject(subject) == filename
-    assert extract_stem_from_filename(filename) == stem
-    assert extract_extension_from_filename(filename) == extension
+    assert split_filename_at_extension(filename) == (stem, extension)
