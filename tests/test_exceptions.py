@@ -61,7 +61,7 @@ def test_invalid_nzb_error() -> None:
     except InvalidNzbError as error:
         assert error.message == message
         assert str(error) == message
-        assert repr(error) == 'InvalidNzbError("Missing something in the NZB")'
+        assert repr(error) == "InvalidNzbError('Missing something in the NZB')"
 
 
 def test_saving_overwrite() -> None:
