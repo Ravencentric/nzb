@@ -107,7 +107,7 @@ def parse_files(nzb: ElementTree.Element) -> tuple[File, ...]:
         groups.sort()
         if not groups:
             msg = (
-                "Invalid or missing 'groups' element within the 'file' element. "
+                "Invalid or missing 'groups' element within a 'file' element. "
                 "Each 'file' element must contain at least one valid 'groups' element."
             )
             raise InvalidNzbError(msg)
@@ -128,7 +128,7 @@ def parse_files(nzb: ElementTree.Element) -> tuple[File, ...]:
         segments.sort(key=lambda segment: segment.number)
         if not segments:
             msg = (
-                "Invalid or missing 'segments' element within the 'file' element. "
+                "Invalid or missing 'segments' element within a 'file' element. "
                 "Each 'file' element must contain at least one valid 'segments' element."
             )
             raise InvalidNzbError(msg)
@@ -146,17 +146,12 @@ def parse_files(nzb: ElementTree.Element) -> tuple[File, ...]:
     if not files:
         msg = (
             "Invalid or missing 'file' element in the NZB document. "
-            "The NZB document must contain at least one valid 'file' element, "
-            "and each 'file' must have at least one valid 'groups' and 'segments' element."
+            "The NZB document must contain at least one valid 'file' element."
         )
         raise InvalidNzbError(msg)
 
     if all(file.is_par2() for file in files):
-        msg = (
-            "The NZB document contains only `.par2` files. "
-            "The NZB document must include at least one valid 'file' element that is not a `.par2` file, "
-            "and each 'file' must have at least one valid 'groups' and 'segments' element."
-        )
+        msg = "The NZB document contains only `.par2` files. It must include at least one non-`.par2` file."
         raise InvalidNzbError(msg)
 
     return tuple(sorted(files, key=lambda file: sort_key_from_subject(file.subject)))
@@ -194,6 +189,6 @@ def nzb_to_tree(nzb: str) -> ElementTree.Element:
     """
     try:
         return ElementTree.fromstring(remove_header(nzb))
-    except ElementTree.ParseError:
-        msg = "The NZB document is not valid XML and could not be parsed."
+    except ElementTree.ParseError as err:
+        msg = f"The NZB document is not valid XML and could not be parsed: {err}"
         raise InvalidNzbError(msg) from None
