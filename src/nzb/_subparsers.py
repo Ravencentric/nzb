@@ -108,8 +108,8 @@ def split_filename_at_extension(filename: str) -> tuple[str, str | None]:
 
     """
     if match := re.search(r"(\.[a-z]\w{2,5})$", filename, re.IGNORECASE):
+        extension = filename[match.start() + 1 :]
         stem = filename[: match.start()]
-        extension = match.group(0).removeprefix(".")
         return (stem, extension)
 
     return (filename, None)
