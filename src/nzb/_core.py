@@ -220,7 +220,7 @@ class Nzb:
         Tuple of unique file names across all the files in the NZB.
         May return an empty tuple if it fails to extract the name for every file.
         """
-        return tuple(sorted({file.name for file in self.files if file.name is not None}))
+        return tuple(file.name for file in self.files if file.name is not None)
 
     @cached_property
     def posters(self) -> tuple[str, ...]:
@@ -246,7 +246,7 @@ class Nzb:
         """
         Tuple of par2 files in the NZB.
         """
-        return tuple(sorted((file for file in self.files if file.is_par2()), key=lambda f: f.subject))
+        return tuple(file for file in self.files if file.is_par2())
 
     @cached_property
     def par2_size(self) -> int:
